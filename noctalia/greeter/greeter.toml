@@ -46,6 +46,6 @@ fill_color = "#0e0f10"
 enabled = true
 position = "above-panel"
 time_format = "{:%H:%M}"
-date_format = "%a %d %m"           # same fields as the bar clock
+date_format = "%a %d %b"           # same fields as the bar clock
 time_font_size = 56
 date_font_size = 13

@@ -11,10 +11,6 @@ local info = S.read("graphite.power")
 local batt = if type(info) == "table" then info else { pct = 0, state = "unknown", timeLeft = "", rate = "", health = "" }
 local profiles = batt.profiles or {}
 local profile = batt.profile or ""
-local status = ""
-
-local PROFILE_LABEL = { ["power-saver"] = "Saver", balanced = "Balanced", performance = "Performance" }
-local PROFILE_GLYPH = { ["power-saver"] = "leaf", balanced = "gauge", performance = "rocket" }
 
 local function apply(v)
   if type(v) ~= "table" then return end
@@ -22,20 +18,6 @@ local function apply(v)
   profiles = v.profiles or {}
   profile = v.profile or ""
   render()
-end
-
-local function setProfile(name)
-  profile = name
-  render()
-  S.exec({ "powerprofilesctl", "set", name }, 6000, function(ok, msg)
-    status = if ok then "" else msg
-    if ok then
-      S.poke("power")
-      render()
-    else
-      apply(S.read("graphite.power"))  -- undo the optimistic highlight
-    end
-  end)
 end
 
 function render()
@@ -48,11 +30,11 @@ function render()
   for _, name in profiles do
     table.insert(profileRow, ui.button({
       key = "p-" .. name,
-      text = PROFILE_LABEL[name] or name,
-      glyph = PROFILE_GLYPH[name] or "gauge",
+      text = S.PROFILE_LABEL[name] or name,
+      glyph = S.PROFILE_GLYPH[name] or "gauge",
       variant = if name == profile then "primary" else "outline",
       flexGrow = 1,
-      onClick = function() setProfile(name) end,
+      onClick = function() S.svc("profile", name) end,
     }))
   end
 
@@ -60,10 +42,10 @@ function render()
     S.header(if charging then "bolt" else "battery-2", "Power", {}),
     S.hline("h1"),
     ui.row({ align = "end", gap = 14 }, {
-      ui.label({ text = `{math.floor(batt.pct + 0.5)}%`, fontFamily = S.mono, fontSize = 34, color = S.C.text }),
+      ui.label({ text = `{math.floor(batt.pct + 0.5)}%`, fontFamily = S.mono, fontSize = S.FS.big, color = S.C.text }),
       ui.column({ gap = 3, flexGrow = 1 }, {
         S.caption((string.gsub(batt.state, "%-", " ")), S.C.sub),
-        ui.label({ text = table.concat(detail, " · "), fontFamily = S.mono, fontSize = 11, color = S.C.dim }),
+        ui.label({ text = table.concat(detail, " · "), fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim }),
       }),
     }),
     ui.progress({ height = 4, progress = batt.pct / 100, radius = 0, fill = S.C.text, track = S.C.well }),
@@ -76,14 +58,10 @@ function render()
     table.insert(body, S.caption("Power profile"))
     table.insert(body, ui.row({ gap = 6 }, profileRow))
   end
-  if status ~= "" then
-    table.insert(body, ui.label({ text = status, fontFamily = S.mono, fontSize = 11, color = S.C.sub, maxLines = 2 }))
-  end
   panel.render(ui.column({ flexGrow = 1, gap = 10, align = "stretch" }, body))
 end
 
 function onOpen(_context)
-  status = ""
   apply(S.read("graphite.power"))
   S.poke("power")
   panel.setWantsSecondTicks(true)

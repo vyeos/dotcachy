@@ -6,8 +6,11 @@
 local S = require("./style.luau")
 S.fonts()
 
+local stamp = nil
+
 local function render()
   local now = os.time()
+  stamp = noctalia.formatTime("%Y%m%d%H%M", now)
   barWidget.render(ui.row({
     key = "clock",
     align = "center",
@@ -18,8 +21,8 @@ local function render()
     end,
     tooltip = noctalia.formatTime("%A, %d %B %Y", now),
   }, {
-    ui.label({ text = noctalia.formatTime("%H:%M", now), fontFamily = S.mono, fontSize = 15, color = S.C.text }),
-    ui.label({ text = string.upper(noctalia.formatTime("%a %d %b", now)), fontFamily = S.mono, fontSize = 11, color = S.C.dim }),
+    ui.label({ text = noctalia.formatTime("%H:%M", now), fontFamily = S.mono, fontSize = S.FS.xl, color = S.C.text }),
+    ui.label({ text = string.upper(noctalia.formatTime("%a %d %b", now)), fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim }),
   }))
 end
 
@@ -27,8 +30,13 @@ function onRightClick()
   noctalia.togglePanel("vyeos/graphite:cc")
 end
 
+-- Redraw only when the minute changes. Waking at the boundary keeps it exact; the
+-- cap is how late it can be after a suspend, when timers do not run.
+local MAX_SLEEP_MS = 5000
 function update()
-  render()
+  local now = os.time()
+  noctalia.setUpdateInterval(math.clamp((60 - now % 60) * 1000, 1000, MAX_SLEEP_MS))
+  if noctalia.formatTime("%Y%m%d%H%M", now) ~= stamp then render() end
 end
 
 noctalia.setUpdateInterval(1000)

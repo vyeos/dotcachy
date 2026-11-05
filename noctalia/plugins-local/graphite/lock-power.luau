@@ -19,7 +19,7 @@ local ARM_SECS = 4
 local IDLE_MS = 60000
 local ARMED_MS = 200
 
-local hovered = nil
+local H = S.hover(function() render() end)
 local armed = nil
 local armedAt = 0
 
@@ -42,7 +42,7 @@ end
 
 local function key(i, a)
   local isArmed = armed == i
-  local ink = if isArmed then "surface" elseif hovered == i then S.C.text else S.C.sub
+  local ink = if isArmed then S.C.inv elseif H.id == i then S.C.text else S.C.sub
   return ui.row({
     key = "k-" .. a.id,
     width = 112,
@@ -51,15 +51,12 @@ local function key(i, a)
     gap = 7,
     align = "center",
     justify = "center",
-    fill = if isArmed then S.C.text elseif hovered == i then S.C.keyHover else "#00000000",
+    fill = if isArmed then S.C.text elseif H.id == i then S.C.keyHover else S.C.clear,
     onClick = function() press(i) end,
-    onHover = function(st)
-      hovered = if st == "true" then i elseif hovered == i then nil else hovered
-      render()
-    end,
+    onHover = H.fn(i),
   }, {
     ui.glyph({ name = a.glyph, size = 15, color = ink }),
-    ui.label({ text = if isArmed then a.label .. "?" else a.label, fontFamily = S.sans, fontSize = 13, color = ink }),
+    ui.label({ text = if isArmed then a.label .. "?" else a.label, fontFamily = S.sans, fontSize = S.FS.body, color = ink }),
   })
 end
 

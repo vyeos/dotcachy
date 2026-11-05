@@ -1,7 +1,7 @@
 --!nonstrict
 -- Calendar: one month as a flat square grid, weeks starting Monday. Today is
 -- inverted (light face, dark ink) like the active workspace; days from the
--- neighbouring months are faint. Opened by right-clicking the clock.
+-- neighbouring months are faint. Opened by clicking the clock.
 
 local S = require("./style.luau")
 S.fonts()
@@ -13,7 +13,7 @@ local CELL = 38
 
 local today = { y = 2000, m = 1, d = 1 }
 local view = { y = 2000, m = 1 }
-local hovered = nil
+local H = S.hover(function() render() end)
 
 local function readToday()
   local s = noctalia.formatTime("%Y-%m-%d", os.time())
@@ -43,22 +43,15 @@ local function shift(dm)
   render()
 end
 
-local function hoverFn(id)
-  return function(st)
-    hovered = if st == "true" then id elseif hovered == id then nil else hovered
-    render()
-  end
-end
-
 local function navKey(id, glyph, onClick)
-  return S.key({ key = id, hovered = hovered == id, height = 30, paddingH = 6, onHover = hoverFn(id), onClick = onClick }, {
+  return S.key({ key = id, hovered = H.id == id, height = 30, paddingH = 6, onHover = H.fn(id), onClick = onClick }, {
     S.glyph(glyph, { size = 16 }),
   })
 end
 
 local function cell(key, text, color, fill)
-  return ui.row({ key = key, width = CELL, height = CELL - 4, radius = 0, fill = fill or "#00000000", align = "center", justify = "center" }, {
-    ui.label({ text = text, fontFamily = S.mono, fontSize = 13, color = color }),
+  return ui.row({ key = key, width = CELL, height = CELL - 4, radius = 0, fill = fill or S.C.clear, align = "center", justify = "center" }, {
+    ui.label({ text = text, fontFamily = S.mono, fontSize = S.FS.body, color = color }),
   })
 end
 
@@ -67,10 +60,10 @@ function render()
   local isCurrent = y == today.y and m == today.m
 
   local title = ui.row({ align = "center", gap = 4, height = 34 }, {
-    ui.label({ text = MONTHS[m], fontFamily = S.sans, fontSize = 16, color = S.C.text }),
-    ui.label({ text = tostring(y), fontFamily = S.mono, fontSize = 13, color = S.C.dim, flexGrow = 1 }),
-    if isCurrent then ui.spacer({ width = 1 }) else S.key({ key = "today", hovered = hovered == "today", height = 30, paddingH = 8,
-      onHover = hoverFn("today"), onClick = function() view.y, view.m = today.y, today.m; render() end }, {
+    ui.label({ text = MONTHS[m], fontFamily = S.sans, fontSize = S.FS.title, color = S.C.text }),
+    ui.label({ text = tostring(y), fontFamily = S.mono, fontSize = S.FS.body, color = S.C.dim, flexGrow = 1 }),
+    if isCurrent then ui.spacer({ width = 1 }) else S.key({ key = "today", hovered = H.id == "today", height = 30, paddingH = 8,
+      onHover = H.fn("today"), onClick = function() view.y, view.m = today.y, today.m; render() end }, {
       S.caption("Today", S.C.sub),
     }),
     navKey("prev", "chevron-left", function() shift(-1) end),
@@ -99,7 +92,7 @@ function render()
       elseif idx > n then
         table.insert(kids, cell(key, tostring(idx - n), S.C.faint))
       elseif isCurrent and idx == today.d then
-        table.insert(kids, cell(key, tostring(idx), "surface", S.C.text))
+        table.insert(kids, cell(key, tostring(idx), S.C.inv, S.C.text))
       else
         table.insert(kids, cell(key, tostring(idx), if c >= 5 then S.C.sub else S.C.text))
       end
@@ -113,7 +106,7 @@ end
 function onOpen(_context)
   readToday()
   view.y, view.m = today.y, today.m
-  hovered = nil
+  H.id = nil
   render()
 end
 

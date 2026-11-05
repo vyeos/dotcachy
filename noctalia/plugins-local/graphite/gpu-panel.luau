@@ -28,7 +28,7 @@ local supported = nil  -- set of mode names; nil until read
 local armed = nil      -- mode waiting for confirmation
 local busy = false
 local err = ""
-local hovered = nil
+local H = S.hover(function() render() end)
 
 local function needsReboot(from, to)
   return from == "AsusMuxDgpu" or to == "AsusMuxDgpu"
@@ -40,7 +40,7 @@ end
 
 local function fail(r)
   busy = false
-  local msg = noctalia.string.trim(string.gsub(r.stderr or "", "\27%[[%d;]*m", ""))
+  local msg = noctalia.string.trim((string.gsub(r.stderr or "", "\27%[[%d;]*m", "")))
   err = if msg ~= "" then (string.match(msg, "[^\n]+$") or msg) else "Switch failed. See journalctl -u supergfxd."
   render()
 end
@@ -65,13 +65,6 @@ local function switch(mode)
   end, 15000)
 end
 
-local function hoverFn(id)
-  return function(st)
-    hovered = if st == "true" then id elseif hovered == id then nil else hovered
-    render()
-  end
-end
-
 local function modeRow(name)
   local m = MODES[name]
   local current = name == info.mode
@@ -80,9 +73,9 @@ local function modeRow(name)
   return S.item({
     key = name,
     height = 46,
-    hovered = hovered == name or selected,
+    hovered = H.id == name or selected,
     selected = current,
-    onHover = hoverFn(name),
+    onHover = H.fn(name),
     onClick = function()
       if busy then return end
       err = ""
@@ -92,8 +85,8 @@ local function modeRow(name)
   }, {
     ui.glyph({ name = m.glyph, size = 16, color = if current or selected then S.C.text else S.C.sub }),
     ui.column({ gap = 2, flexGrow = 1 }, {
-      ui.label({ text = m.label, fontFamily = S.sans, fontSize = 13, color = if current or selected then S.C.text else "on_surface/0.85" }),
-      ui.label({ text = m.desc, fontFamily = S.sans, fontSize = 11, color = S.C.dim, maxLines = 1 }),
+      ui.label({ text = m.label, fontFamily = S.sans, fontSize = S.FS.body, color = if current or selected then S.C.text else S.C.body }),
+      ui.label({ text = m.desc, fontFamily = S.sans, fontSize = S.FS.sm, color = S.C.dim, maxLines = 1 }),
     }),
     S.caption(
       if current then "in use" elseif waiting then "pending" elseif selected then "selected" else "",
@@ -103,7 +96,7 @@ local function modeRow(name)
 end
 
 local function note(text, color)
-  return ui.label({ text = text, fontFamily = S.sans, fontSize = 12, color = color or S.C.dim, flexGrow = 1, maxLines = 2 })
+  return ui.label({ text = text, fontFamily = S.sans, fontSize = S.FS.md, color = color or S.C.dim, flexGrow = 1, maxLines = 2 })
 end
 
 local function footer()
@@ -172,6 +165,7 @@ end)
 function onOpen(_context)
   armed, err = nil, ""
   S.poke("gpu")
+  panel.setWantsSecondTicks(true)
   noctalia.runAsync({ "supergfxctl", "-s" }, function(r)
     if r.exitCode ~= 0 then return end
     local set = {}
@@ -180,6 +174,18 @@ function onOpen(_context)
     render()
   end, 3000)
   render()
+end
+
+-- The service only reads supergfxctl when asked: every few seconds while this is open.
+local POLL_SECS = 5
+local tick = 0
+function update()
+  tick += 1
+  if tick % POLL_SECS == 0 then S.poke("gpu") end
+end
+
+function onClose()
+  panel.setWantsSecondTicks(false)
 end
 
 -- Test hook: `noctalia msg plugin vyeos/graphite:gpu-panel all arm <mode>` shows the

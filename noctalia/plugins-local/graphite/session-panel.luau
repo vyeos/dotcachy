@@ -3,8 +3,8 @@
 -- square tiles, each with its number key in an inverted corner badge.
 -- 1-5 or click picks an action. Lock and Sleep run at once; Log Out, Reboot and
 -- Shut Down arm first and run on Enter or a click on the armed tile (however it
--- was armed). Left/Right move the selection
--- (and disarm), Enter runs the selected/armed action, Escape closes.
+-- was armed). Left/Right move the selection (and disarm), wrapping at the ends and
+-- repeating while held. Enter runs the selected/armed action, Escape closes.
 
 local S = require("./style.luau")
 S.fonts()
@@ -18,7 +18,7 @@ local ACTIONS = {
 }
 
 local selected = nil -- index picked with the keyboard
-local hovered = nil
+local H = S.hover(function() render() end)
 local armed = nil    -- index waiting for Enter or a second click
 local armedBy = nil  -- "mouse" | "key": decides the prompt
 
@@ -43,12 +43,12 @@ end
 local function tile(i, a)
   local isArmed = armed == i
   local lit = isArmed or selected == i
-  local ink = if isArmed then "surface" else (if lit then S.C.text else S.C.sub)
+  local ink = if isArmed then S.C.inv else (if lit then S.C.text else S.C.sub)
   local badge = ui.row({
     width = 16, height = 16, radius = 0, align = "center", justify = "center",
-    fill = if isArmed then "surface" else S.C.well,
+    fill = if isArmed then S.C.inv else S.C.well,
   }, {
-    ui.label({ text = tostring(i), fontFamily = S.mono, fontSize = 10, color = if isArmed then S.C.text else S.C.sub }),
+    ui.label({ text = tostring(i), fontFamily = S.mono, fontSize = S.FS.xs, color = if isArmed then S.C.text else S.C.sub }),
   })
   return ui.column({
     key = "t-" .. a.id,
@@ -57,23 +57,20 @@ local function tile(i, a)
     radius = 0,
     padding = 6,
     gap = 0,
-    fill = if isArmed then S.C.text elseif lit or hovered == i then S.C.keyHover else S.C.key,
+    fill = if isArmed then S.C.text elseif lit or H.id == i then S.C.keyHover else S.C.key,
     align = "stretch",
     onClick = function() run(i, "mouse") end,
-    onHover = function(st)
-      hovered = if st == "true" then i elseif hovered == i then nil else hovered
-      render()
-    end,
+    onHover = H.fn(i),
   }, {
     ui.row({ align = "center" }, { ui.spacer({ flexGrow = 1 }), badge }),
     ui.column({ flexGrow = 1, gap = 8, align = "center", justify = "center" }, {
       ui.glyph({ name = a.glyph, size = 22, color = ink }),
       ui.label({ text = if not isArmed then a.label elseif armedBy == "mouse" then "Click again" else "Press Enter",
-        fontFamily = S.sans, fontSize = 13, color = ink }),
+        fontFamily = S.sans, fontSize = S.FS.body, color = ink }),
     }),
     ui.row({ height = 16, align = "center", justify = "center" }, {
       ui.label({ text = if not isArmed then "" elseif armedBy == "mouse" then "or press Enter" else "or click",
-        fontFamily = S.mono, fontSize = 10.5, color = "surface/0.7" }),
+        fontFamily = S.mono, fontSize = S.FS.xs, color = S.C.invDim }),
     }),
   })
 end
@@ -84,19 +81,29 @@ function render()
   panel.render(ui.row({ gap = 6, align = "center", justify = "center", flexGrow = 1 }, row))
 end
 
-function onKey(key, ...)
+local MOVES = { left = -1, h = -1, ["shift+tab"] = -1, right = 1, l = 1, tab = 1 }
+local R = S.repeater(function(k)
+  local d = MOVES[k]
+  if selected then
+    selected = S.step(selected, d, #ACTIONS)
+  else
+    selected = if d > 0 then 1 else #ACTIONS
+  end
+  armed = nil
+  H.id = nil
+  render()
+end, { "left", "h", "shift+tab", "right", "l", "tab" })
+function onFrameTick(dt) R.tick(dt) end
+
+function onKey(key, pressed)
+  if R.key(key, pressed) then return end
   -- onKey fires for press (true) and release (false); act on presses only,
-  -- or one tap moves two tiles and Enter would arm on press and run on release.
-  local pressed = ...
+  -- or Enter would arm on press and run on release.
   if pressed == false then return end
   local k = string.lower(tostring(key))
   local n = tonumber(k)
   if n and ACTIONS[n] then
     run(n, "key")
-  elseif k == "left" or k == "h" then
-    selected = math.max(1, (selected or 2) - 1); armed = nil; hovered = nil; render()
-  elseif k == "right" or k == "l" or k == "tab" then
-    selected = math.min(#ACTIONS, (selected or 0) + 1); armed = nil; hovered = nil; render()
   elseif k == "return" or k == "enter" or k == "kp_enter" then
     local i = armed or selected
     if i then
@@ -107,9 +114,14 @@ function onKey(key, ...)
   end
 end
 
+function onClose()
+  R.stop()
+end
+
 function onOpen(_context)
+  R.stop()
   selected = nil
-  hovered = nil
+  H.id = nil
   armed = nil
   armedBy = nil
   render()

@@ -1,142 +1,334 @@
+# Graphite rice: flat, square, monochrome. This is the whole shell configuration.
+# ~/.local/state/noctalia/settings.toml overrides it, but only holds what the shell
+# records at runtime (wallpaper paths, anything set with `noctalia msg config-set`).
+# Apply changes with: noctalia msg config-reload
+
 [accessibility]
-ui_scale = 1.20
+ui_scale = 1.0
 
 [bar.default]
-center = [ "workspaces", "spacer_1", "active_window" ]
-concave_edge_corners = true
-end = [ "media", "spacer_1", "tray", "notifications", "network", "volume", "session" ]
+start = [ "vyeos/graphite:logo", "vyeos/graphite:workspaces", "vyeos/graphite:window" ]
+center = [ "vyeos/graphite:clock" ]
+end = [
+    "vyeos/graphite:status",
+    "vyeos/graphite:tasks",
+    "vyeos/graphite:wifi",
+    "vyeos/graphite:bluetooth",
+    "vyeos/graphite:audio",
+    "vyeos/graphite:gpu",
+    "vyeos/graphite:battery",
+    "vyeos/graphite:notifications"
+]
+thickness = 38
+scale = 1.0
+padding = 10
+widget_spacing = 2
+font_family = "Graphite Sans"
+hover_highlight = false
+border = "outline_variant"
+border_width = 1
 margin_edge = 0
-margin_ends = 0
-radius_bottom_left = 12
-radius_bottom_right = 12
+margin_ends = 6        # lines the bar's sides up with Hyprland's gaps_out
+radius = 0
 radius_top_left = 0
 radius_top_right = 0
-scale = 1.10
-start = [ "launcher", "clock", "spacer_1", "group:g1" ]
-thickness = 35
+radius_bottom_left = 0
+radius_bottom_right = 0
+concave_edge_corners = true
 
-    [[bar.default.capsule_group]]
-    border = ""
-    fill = "on_secondary"
-    id = "g1"
-    members = [ "temp", "sysmon_2", "sysmon_3" ]
-    opacity = 1.0
-    padding = 6.0
+[bluetooth]
+connect_when_enabled = true
+connection_notifications = true
+
+[brightness]
+sync_all_monitors = true
+
+[lockscreen]
+blur_intensity = 0.7
+tint_intensity = 0.5
+transition = [ "melt" ]
+transition_duration = 400
+
+[lockscreen_widgets]
+enabled = true
+schema_version = 2
+widget_order = [ "lockscreen-widget-time", "lockscreen-widget-date", "lockscreen-widget-user", "lockscreen-login-box@eDP-2", "lockscreen-power", "lockscreen-widget-time-mux", "lockscreen-widget-date-mux", "lockscreen-widget-user-mux", "lockscreen-login-box@eDP-1", "lockscreen-power-mux" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@eDP-2"]
+    box_height = 128.0
+    box_width = 320.0
+    cy = 660.0
+    cx = 720.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@eDP-2".settings]
+        background_color = "surface"
+        background_opacity = 0.0
+        background_radius = 0.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 0.0
+        layout = "compact"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = false
+        show_password_reveal = false
+        show_session_buttons = false
+        show_unlock_hint = false
+        show_weather = false
+
+    [lockscreen_widgets.widget.lockscreen-power]
+    box_height = 0.0
+    box_width = 0.0
+    cy = 846.0
+    cx = 720.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "vyeos/graphite:lock-power"
+
+        [lockscreen_widgets.widget.lockscreen-power.settings]
+        background = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-date]
+    box_height = 30.0
+    box_width = 300.0
+    cy = 330.0
+    cx = 720.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget.lockscreen-widget-date.settings]
+        background = false
+        center_text = true
+        clock_style = "digital"
+        color = "on_surface_variant"
+        font_family = "Graphite Mono"
+        format = "{:%A  %d %B %Y}"
+        shadow = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-time]
+    box_height = 150.0
+    box_width = 460.0
+    cy = 240.0
+    cx = 720.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget.lockscreen-widget-time.settings]
+        background = false
+        center_text = true
+        clock_style = "digital"
+        color = "on_surface"
+        font_family = "Graphite Mono"
+        format = "{:%H:%M}"
+        shadow = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-user]
+    box_height = 0.0
+    box_width = 0.0
+    cy = 430.0
+    cx = 720.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "label"
+
+        [lockscreen_widgets.widget.lockscreen-widget-user.settings]
+        background = false
+        color = "on_surface"
+        description = "vyeos@cachyos"
+        font_family = "Graphite Sans"
+        shadow = false
+        title = "Rudra Patel"
+
+    [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
+    box_height = 128.0
+    box_width = 320.0
+    cy = 660.0
+    cx = 720.0
+    output = "eDP-1"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings]
+        background_color = "surface"
+        background_opacity = 0.0
+        background_radius = 0.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 0.0
+        layout = "compact"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = false
+        show_password_reveal = false
+        show_session_buttons = false
+        show_unlock_hint = false
+        show_weather = false
+
+    [lockscreen_widgets.widget.lockscreen-power-mux]
+    box_height = 0.0
+    box_width = 0.0
+    cy = 846.0
+    cx = 720.0
+    output = "eDP-1"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "vyeos/graphite:lock-power"
+
+        [lockscreen_widgets.widget.lockscreen-power-mux.settings]
+        background = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-date-mux]
+    box_height = 30.0
+    box_width = 300.0
+    cy = 330.0
+    cx = 720.0
+    output = "eDP-1"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget.lockscreen-widget-date-mux.settings]
+        background = false
+        center_text = true
+        clock_style = "digital"
+        color = "on_surface_variant"
+        font_family = "Graphite Mono"
+        format = "{:%A  %d %B %Y}"
+        shadow = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-time-mux]
+    box_height = 150.0
+    box_width = 460.0
+    cy = 240.0
+    cx = 720.0
+    output = "eDP-1"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget.lockscreen-widget-time-mux.settings]
+        background = false
+        center_text = true
+        clock_style = "digital"
+        color = "on_surface"
+        font_family = "Graphite Mono"
+        format = "{:%H:%M}"
+        shadow = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-user-mux]
+    box_height = 0.0
+    box_width = 0.0
+    cy = 430.0
+    cx = 720.0
+    output = "eDP-1"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "label"
+
+        [lockscreen_widgets.widget.lockscreen-widget-user-mux.settings]
+        background = false
+        color = "on_surface"
+        description = "vyeos@cachyos"
+        font_family = "Graphite Sans"
+        shadow = false
+        title = "Rudra Patel"
+
+
+[notification]
+offset_y = 20
+scale = 0.85
+show_app_name = false
+width = 300
+
+[osd]
+offset_y = 20
+
+[plugins]
+enabled = [ "vyeos/graphite" ]
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/official-plugins"
+    name = "official"
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/community-plugins"
+    name = "community"
+
+    [[plugins.source]]
+    kind = "path"
+    location = "/home/vyeos/.config/noctalia/plugins-local"
+    name = "local"
 
 [shell]
-clipboard_image_action_command = "swash --stdin --name \"swash-$(date +'%Y-%m-%d_%H:%M:%S').png\""
-launch_apps_as_systemd_services = true
+clipboard_enabled = false   # graphite's clip panel keeps the history
+corner_radius_scale = 0
+font_family = "Graphite Sans"
 polkit_agent = true
 settings_show_advanced = true
 
+    [shell.animation]
+    speed = 1.0
+
     [shell.greeter_sync]
-    auto_sync = false
+    auto_sync = false       # see greeter/install.sh
 
     [shell.panel]
-    open_near_click_control_center = true
-    session_placement = "floating"
-    session_position = "center"
+    transparency_mode = "soft"
 
     [shell.screenshot]
+    annotate = false
+    copy_on_close = true
     copy_to_clipboard = false
-    pipe_command = "swash --stdin --name \"swash-$(date +'%Y-%m-%d_%H:%M:%S').png\""
+    pipe_command = "/home/vyeos/.local/bin/graphite-shot"
     pipe_to_command = true
     save_to_file = false
-
-    [[shell.session.actions]]
-    action = "lock"
-    countdown_seconds = 0.0
-    enabled = true
-    shortcut = "1"
-    variant = "default"
-
-    [[shell.session.actions]]
-    action = "logout"
-    countdown_seconds = 0.0
-    enabled = true
-    shortcut = "2"
-    variant = "default"
-
-    [[shell.session.actions]]
-    action = "lock_and_suspend"
-    countdown_seconds = 3.0
-    enabled = true
-    shortcut = "3"
-    variant = "default"
-
-    [[shell.session.actions]]
-    action = "reboot"
-    countdown_seconds = 3.0
-    enabled = true
-    shortcut = "4"
-    variant = "default"
-
-    [[shell.session.actions]]
-    action = "shutdown"
-    countdown_seconds = 3.0
-    enabled = true
-    shortcut = "5"
-    variant = "default"
+    skip_annotate_on_copy_save = true
 
 [system.monitor]
-gpu_poll_seconds = 2
+enabled = false
 
 [theme]
+custom_palette = "Graphite"
 mode = "dark"
-source = "wallpaper"
-wallpaper_scheme = "m3-tonal-spot"
+pure_black_dark = false
+source = "custom"
 
     [theme.templates]
-    builtin_ids = [ "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "qt", "alacritty" ]
+    builtin_ids = [ "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "qt" ]
 
-[widget.clock]
-color = "secondary"
-format = "{:%H:%M %A %m/%d/%y}"
+[wallpaper]
+directory = "/home/vyeos/Downloads"
 
-[widget.launcher]
-color = "secondary"
+    [wallpaper.default]
+    path = "/home/vyeos/Downloads/wallhaven-5ypy88.jpg"
 
-[widget.media]
-hide_when_no_media = true
-title_scroll = "on_hover"
-
-[widget.network]
-color = "secondary"
-
-[widget.notifications]
-color = "secondary"
-
-[widget.session]
-color = "error"
-
-[widget.spacer_1]
-type = "spacer"
-
-[widget.temp]
-show_value = false
-
-[widget.sysmon_2]
-glyph = "gpu-usage"
-show_value = false
-stat = "gpu_temp"
-type = "sysmon"
-
-[widget.sysmon_3]
-glyph = "cpu-2"
-stat = "ram_used"
-type = "sysmon"
-
-[widget.tray]
-capsule = true
-capsule_fill = "on_secondary"
-
-[widget.volume]
-color = "secondary"
-
-[widget.workspaces]
-active_pill_size = 2.5
-capsule = true
-capsule_fill = "on_primary"
-inactive_pill_size = 1.0
-pill_scale = 0.80
-show_labels = false

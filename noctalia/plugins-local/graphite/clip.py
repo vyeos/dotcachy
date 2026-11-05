@@ -3,7 +3,7 @@
 
 The service runs `wl-paste --watch python3 -u clip.py <dir> store`, so every
 selection change calls `store` once. The clip panel calls the other verbs.
-This script is the only writer of <dir>/index.json (guarded by a flock).
+This script is the only writer of <dir>/clip-index.json (guarded by a flock).
 
   clip.py DIR store          capture the current selection (stdin is drained)
   clip.py DIR copy ID        put entry ID back on the clipboard (moves it to top)
@@ -11,8 +11,9 @@ This script is the only writer of <dir>/index.json (guarded by a flock).
   clip.py DIR del ID         delete entry ID
   clip.py DIR clear          delete every unpinned entry
 
-index.json: newest first, [{id, kind: "text"|"image", t, size, hash, pinned,
-text (text, may be cut to TEXT_MAX), file (image path), w, h}]
+clip-index.json: newest first, [{id, kind: "text"|"image", t, size, hash, pinned,
+text (preview, at most TEXT_MAX bytes), full (path of the whole text when it is
+longer than that), file (image path), w, h}]
 """
 import fcntl
 import hashlib
@@ -24,7 +25,7 @@ import sys
 import time
 
 MAX_UNPINNED = 100
-TEXT_MAX = 200_000          # longer text is kept, but only this much is indexed
+TEXT_MAX = 8_000            # longer text lives in its own file; this much is indexed
 SKIP_TYPES = ("x-kde-passwordManagerHint",)
 
 
@@ -50,7 +51,7 @@ class Store:
         self.lock = open(os.path.join(root, "clip.lock"), "w")
         fcntl.flock(self.lock, fcntl.LOCK_EX)
         try:
-            with open(self.path) as f:
+            with open(self.path, encoding="utf-8") as f:
                 self.items = json.load(f)
         except Exception:
             self.items = []
@@ -60,7 +61,7 @@ class Store:
         for old in unpinned[MAX_UNPINNED:]:
             self.drop(old)
         tmp = self.path + ".tmp"
-        with open(tmp, "w") as f:
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(self.items, f, ensure_ascii=False)
         os.replace(tmp, self.path)
         print("changed", flush=True)
@@ -68,11 +69,12 @@ class Store:
     def drop(self, item):
         if item in self.items:
             self.items.remove(item)
-        if item.get("file"):
-            try:
-                os.remove(item["file"])
-            except OSError:
-                pass
+        for key in ("file", "full"):
+            if item.get(key):
+                try:
+                    os.remove(item[key])
+                except OSError:
+                    pass
 
     def find(self, id_):
         return next((i for i in self.items if str(i["id"]) == str(id_)), None)
@@ -129,7 +131,13 @@ def store(s):
         data = run(["wl-paste", "--no-newline", "--type", pref])
         if not data.strip():
             return False
-        s.add("text", data, text=data[:TEXT_MAX].decode(errors="replace"))
+        before = len(s.items)
+        s.add("text", data, text=data[:TEXT_MAX].decode(errors="ignore"))
+        top = s.items[0]
+        if len(s.items) > before and len(data) > TEXT_MAX:
+            top["full"] = os.path.join(s.img, f"{top['id']}.txt")
+            with open(top["full"], "wb") as f:
+                f.write(data)
         return True
     return False
 
@@ -142,6 +150,10 @@ def copy(s, id_):
         with open(item["file"], "rb") as f:
             data = f.read()
         mime = "image/png"
+    elif item.get("full"):
+        with open(item["full"], "rb") as f:
+            data = f.read()
+        mime = "text/plain;charset=utf-8"
     else:
         data, mime = item["text"].encode(), "text/plain;charset=utf-8"
     subprocess.Popen(["wl-copy", "--type", mime], stdin=subprocess.PIPE).communicate(data)

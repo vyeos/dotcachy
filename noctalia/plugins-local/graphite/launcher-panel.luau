@@ -2,42 +2,21 @@
 -- App launcher (SUPER + Space): a flat search line over a list of apps.
 -- A–Z when the search is empty; name matches rank above comment / keyword
 -- matches when searching. Up/Down move (selection sinks into the well),
--- Enter or a click launches through uwsm, like the keybinds do.
--- Usage counts live in pluginDataDir/launcher-usage.json (seeded once from
--- Noctalia's own usage_counts.json).
+-- Enter or a click launches.
 
 local S = require("./style.luau")
 S.fonts()
 
 local ROW_H = 44
-local MAX_ROWS = 80
 
 local dataDir = noctalia.pluginDataDir()
-local usagePath = if dataDir then dataDir .. "/launcher-usage.json" else nil
 
 local apps = {}
-local usage = {}
 local shown = {}
 local query = ""
 local sel = 1
-local hovered = nil
+local H = S.hover(function() render() end)
 local opens = 0
-
-local function loadUsage()
-  local raw = if usagePath then noctalia.readFile(usagePath) else nil
-  local u = if raw then noctalia.json.decode(raw) else nil
-  if type(u) == "table" then usage = u; return end
-  -- first run: borrow Noctalia's counts (keyed by .desktop path)
-  local nraw = noctalia.readFile("~/.local/state/noctalia/usage_counts.json")
-  local n = if nraw then noctalia.json.decode(nraw) else nil
-  usage = {}
-  if type(n) == "table" and type(n.Applications) == "table" then
-    for path, c in n.Applications do
-      local id = string.match(path, "([^/]+)%.desktop$")
-      if id then usage[id] = c end
-    end
-  end
-end
 
 local appsPath = if dataDir then dataDir .. "/apps.json" else nil
 local appsScript = (noctalia.pluginDir() or ".") .. "/apps.py"
@@ -58,7 +37,7 @@ end
 local function scan()
   if not appsPath then return end
   noctalia.runAsync({ "python3", appsScript, appsPath }, function(r)
-    if r.exitCode == 0 then
+    if r.exitCode == 0 and noctalia.string.trim(r.stdout or "") ~= "fresh" then
       loadApps(); compute(); render()
     end
   end, 15000)
@@ -96,12 +75,14 @@ end
 
 local function launch(a)
   if not a then return end
-  usage[a.id] = (usage[a.id] or 0) + 1
-  if usagePath then noctalia.writeFile(usagePath, noctalia.json.encode(usage)) end
   panel.close()
-  noctalia.runAsync({ "uwsm", "app", "--", a.id .. ".desktop" }, function(r)
-    if r.exitCode ~= 0 then noctalia.runAsync({ "gtk-launch", a.id }) end
-  end, 10000)
+  if a.terminal then
+    -- runInTerminal needs $TERMINAL, which this session doesn't set. LC_ALL: LANG here
+    -- is a non-UTF-8 locale, which btop refuses to start under (same as its keybind).
+    noctalia.runAsync("exec kitty -e env LC_ALL=en_IN.UTF-8 " .. a.exec)
+  else
+    noctalia.runAsync({ "gtk-launch", a.id })
+  end
 end
 
 local function row(i, a)
@@ -109,24 +90,21 @@ local function row(i, a)
   local ic = icon(a)
   local lead = if ic then ui.image({ path = ic, width = 26, height = 26, fit = "contain" })
     else ui.row({ width = 26, height = 26, fill = S.C.well, align = "center", justify = "center" }, {
-      ui.label({ text = string.upper(string.sub(a.name, 1, 1)), fontFamily = S.mono, fontSize = 12, color = S.C.sub }),
+      ui.label({ text = string.upper(string.sub(a.name, 1, 1)), fontFamily = S.mono, fontSize = S.FS.md, color = S.C.sub }),
     })
   return S.item({
     key = "a-" .. a.id,
     height = ROW_H,
     selected = isSel,
-    hovered = hovered == i,
+    hovered = H.id == i,
     onClick = function() launch(a) end,
-    onHover = function(st)
-      hovered = if st == "true" then i elseif hovered == i then nil else hovered
-      render()
-    end,
+    onHover = H.fn(i),
   }, {
     lead,
     ui.column({ flexGrow = 1, gap = 1, justify = "center" }, {
-      ui.label({ text = a.name, fontFamily = S.sans, fontSize = 13.5,
+      ui.label({ text = a.name, fontFamily = S.sans, fontSize = S.FS.body,
         color = if isSel then S.C.text else S.C.sub, maxWidth = 470, maxLines = 1 }),
-      ui.label({ text = a.comment, fontFamily = S.sans, fontSize = 11.5, color = S.C.dim, maxWidth = 470, maxLines = 1 }),
+      ui.label({ text = a.comment, fontFamily = S.sans, fontSize = S.FS.sm, color = S.C.dim, maxWidth = 470, maxLines = 1 }),
     }),
     S.caption(if isSel then "↵" else ""),
   })
@@ -135,29 +113,14 @@ end
 function render()
   local rows = {}
   for i, a in shown do
-    if i > MAX_ROWS then break end
     table.insert(rows, row(i, a))
   end
   if #shown == 0 then
     table.insert(rows, ui.column({ paddingV = 60, align = "center" }, { S.caption("no matching apps") }))
   end
   panel.render(ui.column({ gap = 8, flexGrow = 1, align = "stretch" }, {
-    ui.row({ align = "center", gap = 10, height = 34 }, {
-      ui.glyph({ name = "search", size = 17, color = S.C.sub }),
-      ui.input({
-        key = "q-" .. opens,
-        value = query,
-        placeholder = "Search apps",
-        frameVisible = false,
-        focus = true,
-        fontSize = 14,
-        controlSize = "sm",
-        flexGrow = 1,
-        onChange = function(v) query = v or ""; sel = 1; compute(); render() end,
-        onSubmit = function() launch(shown[sel]) end,
-      }),
-      S.caption(tostring(#shown)),
-    }),
+    S.search({ key = "q-" .. opens, value = query, placeholder = "Search apps", count = #shown, onSubmit = function() launch(shown[sel]) end,
+      onChange = function(v) query = v or ""; sel = 1; compute(); render() end }),
     S.hline("h1"),
     ui.scroll({ key = "list", flexGrow = 1, gap = 0, revealKey = if shown[sel] then "a-" .. shown[sel].id else nil }, rows),
     S.hline("h2"),
@@ -173,8 +136,8 @@ end
 
 local function move(d)
   if #shown == 0 then return end
-  sel = S.step(sel, d, math.min(#shown, MAX_ROWS))
-  hovered = nil
+  sel = S.step(sel, d, #shown)
+  H.id = nil
   render()
 end
 
@@ -186,8 +149,7 @@ function onKey(key, pressed)
   if R.key(key, pressed) then return end
   if pressed == false then return end
   local k = string.lower(tostring(key))
-  if false then
-  elseif k == "return" or k == "kp_enter" then launch(shown[sel])
+  if k == "return" or k == "kp_enter" then launch(shown[sel])
   end
 end
 
@@ -196,14 +158,12 @@ function onOpen(_context)
   opens += 1
   query = ""
   sel = 1
-  hovered = nil
+  H.id = nil
   compute()
   scan() -- picks up newly installed apps
   render()
 end
 
-loadUsage()
 loadApps()
 compute()
 render()
-scan()

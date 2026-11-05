@@ -1,11 +1,10 @@
 --!nonstrict
--- Current window: app glyph and title on a key. The tooltip carries the full title.
+-- Current window: app glyph and title. Display only, with no hover, tooltip or click.
 
 local S = require("./style.luau")
 S.fonts()
 
 local win = S.read("graphite.win") or { cls = "", title = "" }
-local hovered = false
 
 local GLYPHS = {
   { "kitty", "terminal-2" }, { "alacritty", "terminal-2" }, { "foot", "terminal-2" },
@@ -29,17 +28,9 @@ end
 local function render()
   local empty = (win.cls or "") == "" and (win.title or "") == ""
   local title = if empty then "Desktop" else (if (win.title or "") ~= "" then win.title else win.cls)
-  barWidget.render(S.key({
-    key = "win",
-    hovered = hovered,
-    tooltip = if empty then "No focused window" else `{win.cls}\n{win.title}`,
-    onHover = function(state)
-      hovered = state == "true"
-      render()
-    end,
-  }, {
+  barWidget.render(S.key({ key = "win" }, {
     S.glyph(if empty then "layout-dashboard" else glyphFor(win.cls), { color = S.C.sub }),
-    S.label(title, { color = if empty then S.C.dim else "on_surface/0.85", maxWidth = 300 }),
+    S.label(title, { color = if empty then S.C.dim else S.C.body, maxWidth = 300 }),
   }))
 end
 

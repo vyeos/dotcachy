@@ -6,7 +6,7 @@ local S = require("./style.luau")
 S.fonts()
 
 local info = S.read("graphite.wifi") or {}
-local hovered = false
+local H = S.hover(function() render() end)
 
 local function glyph()
   if info.wired then return "network" end
@@ -24,16 +24,13 @@ local function tooltip()
   return `{info.ssid} · {info.signal}%`
 end
 
-local function render()
+function render()
   barWidget.render(S.key({
     key = "wifi",
-    hovered = hovered,
+    hovered = H.id ~= nil,
     paddingH = 7,
     tooltip = tooltip(),
-    onHover = function(state)
-      hovered = state == "true"
-      render()
-    end,
+    onHover = H.fn("on"),
     onClick = function() noctalia.togglePanel("vyeos/graphite:wifi-panel") end,
   }, {
     S.glyph(glyph(), { color = if info.connected or info.wired then S.C.sub else S.C.dim }),

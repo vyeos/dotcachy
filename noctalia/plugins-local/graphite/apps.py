@@ -3,13 +3,15 @@
 
   apps.py OUT.json
 
-Writes [{id, name, comment, hay, icon}] (icon = resolved file path or "").
+Writes [{id, name, comment, hay, icon, terminal, exec}] (icon = resolved file path
+or ""), or prints "fresh" and does nothing when no source changed since OUT.json.
 Scanning in Luau blew the panel's CPU budget, so this runs async and the
 launcher shows the previous cache until it finishes.
 """
 import configparser
 import json
 import os
+import re
 import sys
 
 HOME = os.path.expanduser("~")
@@ -98,8 +100,26 @@ def parse(path):
     return e
 
 
+def fresh(out):
+    """OUT.json is newer than the app folders, the icon theme setting and this script."""
+    try:
+        built = os.path.getmtime(out)
+    except OSError:
+        return False
+    for path in APP_DIRS + [f"{HOME}/.config/gtk-3.0/settings.ini", os.path.abspath(__file__)]:
+        try:
+            if os.path.getmtime(path) > built:
+                return False
+        except OSError:
+            pass
+    return True
+
+
 def main():
     out = sys.argv[1]
+    if fresh(out):
+        print("fresh")
+        return
     icons = build_icon_index(theme_chain(icon_theme()))
     seen, apps = set(), []
     for d in APP_DIRS:
@@ -124,9 +144,11 @@ def main():
                 "comment": comment,
                 "hay": " ".join([e.get("GenericName", ""), comment, e.get("Keywords", ""), id_]).lower(),
                 "icon": path,
+                "terminal": e.get("Terminal") == "true",
+                "exec": re.sub(r"\s*%[a-zA-Z]", "", e["Exec"]),
             })
     tmp = out + ".tmp"
-    with open(tmp, "w") as f:
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(apps, f, ensure_ascii=False)
     os.replace(tmp, out)
     print(len(apps))

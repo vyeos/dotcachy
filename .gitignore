@@ -4,7 +4,6 @@
 !/.gitignore
 !/noctalia/
 !/hypr/
-!/hypr-backup-2026-11-04/
 !/kitty/
 !/gtk-3.0/
 !/gtk-4.0/
@@ -14,8 +13,6 @@
 !/swash/
 !/fontconfig/
 !/mimeapps.list
-!/mimeapps.list.bak-dolphin
 !/kdeglobals
-!/kdeglobals.bak
 __pycache__/
 *.pyc

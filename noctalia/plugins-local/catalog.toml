@@ -1,23 +1,12 @@
 # Local plugin source (registered with: noctalia msg plugins source add local path ~/.config/noctalia/plugins-local)
 
 [[plugin]]
-id = "vyeos/snapshot"
-name = "Snapshot"
-version = "1.0.0"
-author = "vyeos"
-license = "MIT"
-icon = "camera"
-description = "Screenshot menu: region, window or full screen; copies to clipboard and notifies, click the notification to annotate."
-plugin_api = 39
-tags = ["screenshot", "utility"]
-
-[[plugin]]
 id = "vyeos/graphite"
-name = "Graphite Bar"
+name = "Graphite"
 version = "1.0.0"
 author = "vyeos"
 license = "MIT"
-icon = "pencil"
-description = "Monochrome graphite top bar: etched keys, pencil hatching, workspaces, window title, clock, a hover drawer for long-running apps, Wi-Fi, Bluetooth and battery."
+icon = "hexagon"
+description = "Monochrome shell: flat bar, panels, launcher, clipboard, notifications, calculator and lock screen row."
 plugin_api = 39
 tags = ["bar", "theme", "hyprland"]

@@ -28,7 +28,7 @@ local histPos = nil
 local carry = nil -- the committed result on screen: { text, value }
 local lastLine = nil -- line above the field; empty until something is committed
 local copied = false
-local hovered = nil
+local H = S.hover(function() render() end)
 local actions = {}
 
 local conv = { cat = 1, expr = "", units = {} }
@@ -263,21 +263,14 @@ end
 
 -- ── Pieces ──────────────────────────────────────────────────────────────────
 
-local function hoverFn(id)
-  return function(st)
-    hovered = if st == "true" then id elseif hovered == id then nil else hovered
-    render()
-  end
-end
-
 -- One keypad cell. o: { id, label, glyph, tone = "num"|"op"|"fn"|"eq", run }
 local function cell(o)
   actions[o.id] = o.run
   local eq = o.tone == "eq"
-  local color = if eq then "surface" elseif o.tone == "num" then S.C.text else S.C.sub
+  local color = if eq then S.C.inv elseif o.tone == "num" then S.C.text else S.C.sub
   local size = if o.tone == "fn" then 13 else 18
-  local fill = "#00000000"
-  if eq then fill = S.C.text elseif hovered == o.id then fill = S.C.keyHover end
+  local fill = S.C.clear
+  if eq then fill = S.C.text elseif H.id == o.id then fill = S.C.keyHover end
   return ui.row({
     key = "k-" .. o.id,
     height = KEY_H,
@@ -287,7 +280,7 @@ local function cell(o)
     align = "center",
     justify = "center",
     onClick = o.run,
-    onHover = hoverFn(o.id),
+    onHover = H.fn(o.id),
   }, {
     if o.glyph then ui.glyph({ name = o.glyph, size = 19, color = color })
     else ui.label({ text = o.label, fontFamily = S.mono, fontSize = size, color = color }),
@@ -308,7 +301,7 @@ local function tabs()
     local active = mode == m
     actions[id] = function()
       mode = m
-      hovered = nil
+      H.id = nil
       err = nil
       copied = false
       gen += 1
@@ -317,15 +310,15 @@ local function tabs()
     end
     table.insert(kids, ui.column({
       key = id, height = 32, paddingH = 10, gap = 0, align = "center", justify = "end",
-      fill = if hovered == id and not active then S.C.keyHover else "#00000000",
+      fill = if H.id == id and not active then S.C.keyHover else S.C.clear,
       onClick = actions[id],
-      onHover = hoverFn(id),
+      onHover = H.fn(id),
     }, {
       ui.row({ flexGrow = 1, align = "center" }, {
-        ui.label({ text = MODE_LABEL[m], fontFamily = S.sans, fontSize = 14,
+        ui.label({ text = MODE_LABEL[m], fontFamily = S.sans, fontSize = S.FS.lg,
           color = if active then S.C.text else S.C.dim }),
       }),
-      ui.box({ width = 34, height = 2, radius = 0, fill = if active then S.C.text else "#00000000" }),
+      ui.box({ width = 34, height = 2, radius = 0, fill = if active then S.C.text else S.C.clear }),
     }))
   end
   table.insert(kids, ui.spacer({ flexGrow = 1 }))
@@ -339,7 +332,7 @@ local function fieldRow(key, value, onChange, onSubmit)
     value = value,
     frameVisible = false,
     focus = true,
-    fontSize = 16,
+    fontSize = S.FS.title,
     controlSize = "sm",
     flexGrow = 1,
     onChange = onChange,
@@ -434,7 +427,7 @@ local function calcView()
   return {
     ui.row({ height = 18, align = "center", justify = "end" }, {
       ui.label({ text = lastLine or " ",
-        fontFamily = S.mono, fontSize = 11.5, color = S.C.dim, maxLines = 1 }),
+        fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim, maxLines = 1 }),
     }),
     ui.row({ height = 30, align = "center" }, {
       fieldRow("expr-" .. gen, expr, onExprChange, function() commit() end),
@@ -573,7 +566,7 @@ function onKey(key, pressed)
 end
 
 function onOpen(_context)
-  hovered = nil
+  H.id = nil
   copied = false
   err = nil
   histPos = nil

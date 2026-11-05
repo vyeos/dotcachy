@@ -6,7 +6,7 @@ local S = require("./style.luau")
 S.fonts()
 
 local info = S.read("graphite.gpu") or {}
-local hovered = false
+local H = S.hover(function() render() end)
 
 local function look()
   if info.mode == "Integrated" then return "cpu-off", S.C.dim end
@@ -24,17 +24,14 @@ local function tip()
   return "Graphics mode unknown"
 end
 
-local function render()
+function render()
   local glyph, color = look()
   barWidget.render(S.key({
     key = "gpu",
-    hovered = hovered,
+    hovered = H.id ~= nil,
     paddingH = 7,
     tooltip = tip(),
-    onHover = function(state)
-      hovered = state == "true"
-      render()
-    end,
+    onHover = H.fn("on"),
     onClick = function() noctalia.togglePanel("vyeos/graphite:gpu-panel") end,
   }, {
     S.glyph(glyph, { color = color }),

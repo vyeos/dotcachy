@@ -6,9 +6,9 @@ local S = require("./style.luau")
 S.fonts()
 
 local info = S.read("graphite.bt") or { powered = false, devices = {} }
-local hovered = false
+local H = S.hover(function() render() end)
 
-local function render()
+function render()
   local devices = info.devices or {}
   local glyph = if not info.powered then "bluetooth-off" elseif #devices > 0 then "bluetooth-connected" else "bluetooth"
   local tip = if not info.powered then "Bluetooth off"
@@ -16,13 +16,10 @@ local function render()
     else "Bluetooth on · nothing connected"
   barWidget.render(S.key({
     key = "bt",
-    hovered = hovered,
+    hovered = H.id ~= nil,
     paddingH = 7,
     tooltip = tip,
-    onHover = function(state)
-      hovered = state == "true"
-      render()
-    end,
+    onHover = H.fn("on"),
     onClick = function() noctalia.togglePanel("vyeos/graphite:bluetooth-panel") end,
   }, {
     S.glyph(glyph, { color = if info.powered then S.C.sub else S.C.dim }),

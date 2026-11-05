@@ -6,18 +6,15 @@ local S = require("./style.luau")
 S.fonts()
 
 local info = S.read("graphite.vol") or { pct = 0, muted = false }
-local hovered = false
+local H = S.hover(function() render() end)
 
-local function render()
+function render()
   barWidget.render(S.key({
     key = "audio",
-    hovered = hovered,
+    hovered = H.id ~= nil,
     paddingH = 7,
     tooltip = if info.muted then "Muted" else `Volume {info.pct or 0}%`,
-    onHover = function(state)
-      hovered = state == "true"
-      render()
-    end,
+    onHover = H.fn("on"),
     onClick = function() noctalia.togglePanel("vyeos/graphite:audio-panel") end,
   }, {
     S.glyph(S.volumeGlyph(info.pct, info.muted), { color = if info.muted then S.C.dim else S.C.sub }),
@@ -30,11 +27,11 @@ function onScroll(axis, steps)
   if s == 0 then return end
   -- negative steps = wheel up = louder
   local sign = if s < 0 then "+" else "-"
-  S.exec({ "wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", `5%{sign}` }, 3000, function() S.poke("vol") end)
+  S.run({ "wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", `5%{sign}` })
 end
 
 function onRightClick()
-  S.exec({ "wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle" }, 3000, function() S.poke("vol") end)
+  S.svc("mute", "out")
 end
 
 S.watch("graphite.vol", function(v)

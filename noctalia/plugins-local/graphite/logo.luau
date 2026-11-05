@@ -7,18 +7,15 @@ S.fonts()
 
 local frame = 0
 local spinning = false
-local hovered = false
+local H = S.hover(function() render() end)
 
-local function render()
+function render()
   barWidget.render(ui.row({ gap = 0, align = "center" }, {
     S.key({
       key = "logo",
-      hovered = hovered,
+      hovered = H.id ~= nil,
       paddingH = 7,
-      onHover = function(state)
-        hovered = state == "true"
-        render()
-      end,
+      onHover = H.fn("on"),
       onClick = function()
         noctalia.togglePanel("vyeos/graphite:launcher")
         spinning = true

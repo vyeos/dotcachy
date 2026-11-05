@@ -9,21 +9,22 @@ local S = require("./style.luau")
 S.fonts()
 
 local info = S.read("graphite.notif") or { unread = 0, dnd = false }
-local hovered = false
+local H = S.hover(function() render() end)
 local ringing = false
 local nextNudge = 0
+local NUDGE_MS, IDLE_MS = 200, 60000
 
 -- Inverted square badge. Always rendered so the key keeps its width: at zero
 -- it is an empty, transparent placeholder of the same size.
 local function countRing(n)
   local show = n > 0
   local text = if n > 99 then "99+" elseif show then tostring(n) else ""
-  return ui.row({ height = 16, minWidth = 16, radius = 0, fill = if show then S.C.text else "#00000000", paddingH = 4, align = "center", justify = "center" }, {
-    ui.label({ text = text, fontFamily = S.mono, fontSize = 10, color = "surface" }),
+  return ui.row({ height = 16, minWidth = 16, radius = 0, fill = if show then S.C.text else S.C.clear, paddingH = 4, align = "center", justify = "center" }, {
+    ui.label({ text = text, fontFamily = S.mono, fontSize = S.FS.xs, color = S.C.inv }),
   })
 end
 
-local function render()
+function render()
   local unread = info.unread or 0
   local glyph = if info.dnd then "bell-off" elseif ringing then "bell-ringing" else "bell"
   local kids = { S.glyph(glyph, { color = if unread > 0 then S.C.text else S.C.sub }) }
@@ -34,15 +35,12 @@ local function render()
     else "No new notifications"
   barWidget.render(S.key({
     key = "notif",
-    hovered = hovered,
+    hovered = H.id ~= nil,
     paddingH = 7,
     minWidth = 51, -- bell + gap + badge, so a count never changes the width
     gap = 5,
     tooltip = tip,
-    onHover = function(st)
-      hovered = st == "true"
-      render()
-    end,
+    onHover = H.fn("on"),
     onClick = function()
       local open = noctalia.state.get("graphite.drawer") == "open"
       noctalia.state.set("graphite.drawer", if open then "closed" else "open")
@@ -51,13 +49,16 @@ local function render()
 end
 
 function onRightClick()
-  S.setDnd(not info.dnd)
+  S.svc("dnd", if info.dnd then "off" else "on")
 end
 
--- Nudge the bell every few seconds while something is unread.
+local function nudging()
+  return (info.unread or 0) > 0 and not info.dnd
+end
+
+-- Nudge the bell every few seconds while something is unread; asleep otherwise.
 function update()
-  local unread = info.unread or 0
-  if unread == 0 or info.dnd then
+  if not nudging() then
     if ringing then ringing = false; render() end
     return
   end
@@ -77,9 +78,10 @@ S.watch("graphite.notif", function(v)
     local before = info.unread or 0
     info = v
     if (info.unread or 0) > before then nextNudge = 0 end -- ring right away for new ones
+    noctalia.setUpdateInterval(if nudging() then NUDGE_MS else IDLE_MS)
   end
   render()
 end)
 
-noctalia.setUpdateInterval(200)
+noctalia.setUpdateInterval(if nudging() then NUDGE_MS else IDLE_MS)
 render()

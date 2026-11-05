@@ -21,15 +21,35 @@ local items = {}
 local shown = {}
 local query = ""
 local sel = 1
-local hovered = nil
-local hoveredAct = nil
+local H = S.hover(function() render() end)
+local HAct = S.hover(function() render() end)
 local armedClear = false
 local opens = 0
+
+local isOpen = false
+
+local function firstLine(s)
+  s = noctalia.string.trim(string.sub(s or "", 1, 400)) -- a title needs no more, and long text is slow
+  local line = string.match(s, "^[^\n]*") or ""
+  line = string.gsub(line, "%s+", " ")
+  if string.find(s, "\n", 1, true) then line ..= "  ↵" end
+  return line
+end
 
 local function load()
   local raw = noctalia.readFile(indexPath)
   local d = if raw then noctalia.json.decode(raw) else nil
   items = if type(d) == "table" then d else {}
+  -- worked out once here: render and compute run on every hover and keystroke
+  for _, it in items do
+    if it.kind == "text" then
+      it.title = firstLine(it.text)
+      it.hay = string.lower(it.text or "")
+    else
+      it.title = `Image {it.w or "?"}×{it.h or "?"}`
+      it.hay = "image"
+    end
+  end
 end
 
 local function compute()
@@ -39,20 +59,11 @@ local function compute()
   for pass = 1, 2 do
     for _, it in items do
       if (pass == 1) == (it.pinned == true) then
-        local hay = if it.kind == "text" then string.lower(it.text or "") else "image"
-        if q == "" or string.find(hay, q, 1, true) then table.insert(shown, it) end
+        if q == "" or string.find(it.hay, q, 1, true) then table.insert(shown, it) end
       end
     end
   end
   sel = math.clamp(sel, 1, math.max(1, #shown))
-end
-
-local function ago(t)
-  local d = math.max(0, os.time() - (t or 0))
-  if d < 60 then return "now" end
-  if d < 3600 then return `{d // 60}m` end
-  if d < 86400 then return `{d // 3600}h` end
-  return `{d // 86400}d`
 end
 
 local function bytes(n)
@@ -60,14 +71,6 @@ local function bytes(n)
   if n < 1024 then return `{n} B` end
   if n < 1048576 then return string.format("%.1f KB", n / 1024) end
   return string.format("%.1f MB", n / 1048576)
-end
-
-local function firstLine(s)
-  s = noctalia.string.trim(s or "")
-  local line = string.match(s, "^[^\n]*") or ""
-  line = string.gsub(line, "%s+", " ")
-  if string.find(s, "\n", 1, true) then line ..= "  ↵" end
-  return line
 end
 
 local function clip(verb, id, after)
@@ -83,7 +86,7 @@ end
 local function copySel()
   local it = shown[sel]
   if not it then return end
-  if it.kind == "text" then
+  if it.kind == "text" and not it.full then
     noctalia.copyToClipboard(it.text or "", "text/plain;charset=utf-8")
   else
     clip("copy", it.id)
@@ -102,44 +105,37 @@ local function row(i, it)
       ui.glyph({ name = "align-left", size = 14, color = S.C.sub }),
     })
   end
-  local title = if it.kind == "image" then `Image {it.w or "?"}×{it.h or "?"}` else firstLine(it.text)
   return S.item({
     key = "c-" .. it.id,
     height = ROW_H,
     selected = isSel,
-    hovered = hovered == i,
+    hovered = H.id == i,
     onClick = function()
       if sel == i then copySel() else sel = i; render() end
     end,
-    onHover = function(st)
-      hovered = if st == "true" then i elseif hovered == i then nil else hovered
-      render()
-    end,
+    onHover = H.fn(i),
   }, {
     lead,
     ui.column({ flexGrow = 1, gap = 2, justify = "center" }, {
-      ui.label({ text = title, fontFamily = S.sans, fontSize = 13,
+      ui.label({ text = it.title, fontFamily = S.sans, fontSize = S.FS.body,
         color = if isSel then S.C.text else S.C.sub, maxWidth = LIST_W - 90, maxLines = 1 }),
-      S.caption(`{ago(it.t)} · {bytes(it.size)}`),
+      S.caption(`{S.ago(it.t)} · {bytes(it.size)}`),
     }),
     -- pinned: a filled square, like a workspace with windows
-    ui.box({ width = 6, height = 6, radius = 0, fill = if it.pinned then S.C.text else "#00000000" }),
+    ui.box({ width = 6, height = 6, radius = 0, fill = if it.pinned then S.C.text else S.C.clear }),
   })
 end
 
 local function action(id, glyph, label, hint, fn)
-  local lit = hoveredAct == id
+  local lit = HAct.id == id
   return ui.row({
     key = "a-" .. id, height = 30, paddingH = 10, gap = 7, align = "center", radius = 0,
-    fill = if lit then S.C.keyHover else "#00000000",
+    fill = if lit then S.C.keyHover else S.C.clear,
     onClick = fn,
-    onHover = function(st)
-      hoveredAct = if st == "true" then id elseif hoveredAct == id then nil else hoveredAct
-      render()
-    end,
+    onHover = HAct.fn(id),
   }, {
     ui.glyph({ name = glyph, size = 15, color = if lit then S.C.text else S.C.sub }),
-    ui.label({ text = label, fontFamily = S.sans, fontSize = 12.5, color = if lit then S.C.text else S.C.sub }),
+    ui.label({ text = label, fontFamily = S.sans, fontSize = S.FS.md, color = if lit then S.C.text else S.C.sub }),
     S.caption(hint),
   })
 end
@@ -168,13 +164,13 @@ local function preview()
     local txt = it.text or ""
     if #txt > 6000 then txt = string.sub(txt, 1, 6000) .. "\n…" end
     body = ui.scroll({ key = "pv-" .. it.id, flexGrow = 1, fill = S.C.well, padding = 12 }, {
-      ui.label({ text = txt, fontFamily = S.mono, fontSize = 12.5, color = S.C.text, maxWidth = 360 }),
+      ui.label({ text = txt, fontFamily = S.mono, fontSize = S.FS.md, color = S.C.text, maxWidth = 360 }),
     })
   end
   return ui.column({ flexGrow = 1, gap = 8 }, {
     ui.row({ align = "center", gap = 8, height = 20 }, {
       S.caption(if it.kind == "image" then "image" else "text", S.C.sub),
-      S.caption(`· {bytes(it.size)} · {ago(it.t)}`),
+      S.caption(`· {bytes(it.size)} · {S.ago(it.t)}`),
       ui.spacer({ flexGrow = 1 }),
       S.caption(if it.pinned then "pinned" else ""),
     }),
@@ -198,37 +194,23 @@ function render()
   end
 
   panel.render(ui.column({ gap = 8, flexGrow = 1, align = "stretch" }, {
-    ui.row({ align = "center", gap = 10, height = 34 }, {
-      ui.glyph({ name = "clipboard", size = 17, color = S.C.sub }),
-      ui.input({
-        key = "q-" .. opens,
-        value = query,
-        placeholder = "Filter clipboard",
-        frameVisible = false,
-        focus = true,
-        fontSize = 14,
-        controlSize = "sm",
-        flexGrow = 1,
-        onChange = function(v) query = v or ""; sel = 1; compute(); render() end,
-        onSubmit = function() copySel() end,
-      }),
-      S.caption(tostring(#items)),
-      ui.row({
+    S.search({ glyph = "clipboard", key = "q-" .. opens, value = query, placeholder = "Filter clipboard", count = #items,
+      onSubmit = function() copySel() end,
+      onChange = function(v) query = v or ""; sel = 1; compute(); render() end,
+      right = { ui.row({
         key = "clear", height = 26, paddingH = 8, align = "center", radius = 0,
-        fill = if armedClear then S.C.text elseif hoveredAct == "clear" then S.C.keyHover else "#00000000",
+        fill = if armedClear then S.C.text elseif HAct.id == "clear" then S.C.keyHover else S.C.clear,
         onClick = function()
           if armedClear then armedClear = false; clip("clear") else armedClear = true; render() end
         end,
         onHover = function(st)
-          hoveredAct = if st == "true" then "clear" elseif hoveredAct == "clear" then nil else hoveredAct
-          if st ~= "true" and armedClear then armedClear = false end
-          render()
+          HAct.fn("clear")(st)
+          if st ~= "true" and armedClear then armedClear = false; render() end
         end,
       }, {
-        ui.label({ text = if armedClear then "CLEAR ALL?" else "CLEAR", fontFamily = S.mono, fontSize = 10.5,
-          color = if armedClear then "surface" else S.C.dim }),
-      }),
-    }),
+        ui.label({ text = if armedClear then "CLEAR ALL?" else "CLEAR", fontFamily = S.mono, fontSize = S.FS.xs,
+          color = if armedClear then S.C.inv else S.C.dim }),
+      }), } }),
     S.hline("h1"),
     ui.row({ flexGrow = 1, gap = 12, align = "stretch" }, {
       ui.scroll({ key = "list", width = LIST_W, gap = 0, revealKey = if shown[sel] then "c-" .. shown[sel].id else nil }, rows),
@@ -244,7 +226,7 @@ end
 local function move(d)
   if #shown == 0 then return end
   sel = S.step(sel, d, #shown)
-  hovered = nil
+  H.id = nil
   render()
 end
 
@@ -256,8 +238,7 @@ function onKey(key, pressed)
   if R.key(key, pressed) then return end
   if pressed == false then return end
   local k = string.lower(tostring(key))
-  if false then
-  elseif k == "return" or k == "kp_enter" then copySel()
+  if k == "return" or k == "kp_enter" then copySel()
   elseif k == "ctrl+p" then
     local it = shown[sel]
     if it then clip("pin", it.id) end
@@ -267,17 +248,24 @@ function onKey(key, pressed)
   end
 end
 
+-- Only while open: the next open reads the index anyway.
 S.watch("graphite.clipRev", function(_v)
-  load(); compute(); render()
+  if isOpen then load(); compute(); render() end
 end)
 
+function onClose()
+  isOpen = false
+  R.stop()
+end
+
 function onOpen(_context)
+  isOpen = true
   R.stop()
   opens += 1
   query = ""
   sel = 1
-  hovered = nil
-  hoveredAct = nil
+  H.id = nil
+  HAct.id = nil
   armedClear = false
   load(); compute(); render()
 end

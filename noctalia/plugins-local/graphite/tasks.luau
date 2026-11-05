@@ -17,10 +17,19 @@ local closeAt = nil      -- nowMs when a pending close fires
 local hoveredKey = nil
 local fast = false
 
+-- Timers are only on screen while the drawer is open or OBS records; otherwise sleep.
+local function live()
+  return shown > 0 or rec.recording == true
+end
+
+local function applyInterval()
+  noctalia.setUpdateInterval(if fast then STEP_MS elseif live() then 1000 else 60000)
+end
+
 local function setFast(on)
   if on ~= fast then
     fast = on
-    noctalia.setUpdateInterval(if on then STEP_MS else 1000)
+    applyInterval()
   end
 end
 
@@ -54,21 +63,18 @@ end
 local function taskKey(t)
   local recNow = t.rec and rec.recording == true
   local timeText = if recNow then "REC " .. elapsed(rec.startedMs) else elapsed(t.startedMs)
-  local tip = if recNow
-    then `{t.label} · recording {elapsed(rec.startedMs)}\n{rec.file or ""}\nClick to focus`
-    else `{t.label} · open {elapsed(t.startedMs)}\nClick to focus`
   return S.key({
     key = "task-" .. t.id,
     hovered = hoveredKey == t.id,
     onHover = hoverFn(t.id),
     onClick = function()
       local sel = `class:(?i)^{t.cls}$`
-      S.dispatch(`hl.dsp.focus(\{ window = {S.lstr(sel)} \})`, { "focuswindow", sel })
+      S.dispatch(`hl.dsp.focus(\{ window = {S.lstr(sel)} \})`)
     end,
   }, {
     S.glyph(t.glyph, { color = S.C.sub }),
     S.label(t.label, { color = S.C.text }),
-    S.label(timeText, { font = S.mono, size = 11, color = if recNow then S.C.text else S.C.dim }),
+    S.label(timeText, { font = S.mono, size = S.FS.sm, color = if recNow then S.C.text else S.C.dim }),
   })
 end
 
@@ -93,7 +99,7 @@ function render()
 
   local chevronKids = {}
   if total > 0 then
-    table.insert(chevronKids, S.label(tostring(total), { font = S.mono, size = 11, color = S.C.sub }))
+    table.insert(chevronKids, S.label(tostring(total), { font = S.mono, size = S.FS.sm, color = S.C.sub }))
   end
   if recording() then
     local pulse = (os.time() % 2) == 0
@@ -133,6 +139,7 @@ function onHover(entered)
 end
 
 function update()
+  local draw = fast or live() -- decided first: the step that ends the animation still draws
   local now = noctalia.nowMs()
   if closeAt and now >= closeAt then
     open = false
@@ -146,12 +153,14 @@ function update()
   end
   if shown == target and closeAt == nil then
     setFast(false)
+    applyInterval()
   end
-  render()
+  if draw then render() end
 end
 
 S.watch("graphite.rec", function(v)
   rec = if type(v) == "table" then v else { recording = false }
+  applyInterval()
   render()
 end)
 
@@ -163,7 +172,7 @@ S.watch("graphite.tasks", function(v)
   render()
 end)
 
-noctalia.setUpdateInterval(1000)
+applyInterval()
 render()
 
 -- IPC: noctalia msg plugin vyeos/graphite:tasks all drawer open|close|toggle

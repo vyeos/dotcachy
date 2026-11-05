@@ -4,20 +4,47 @@
 
 local S = {}
 
--- Palette roles, so the bar follows the Graphite palette (and its light variant).
+-- Palette roles, so everything follows the Graphite palette.
 S.C = {
   text = "on_surface",          -- g9
+  body = "on_surface/0.85",     -- list text that is not selected
   sub = "on_surface_variant",   -- g7
   dim = "on_surface_variant/0.55",
   faint = "on_surface_variant/0.3",
-  key = "surface_container",    -- g2, raised key face
+  key = "surface_container",    -- g2, raised tile
   keyHover = "hover",           -- g3
-  edge = "outline_variant",     -- g4, key rim
-  pressed = "surface",          -- g1, a key pushed into the bar
+  edge = "outline_variant",     -- g4, panel rim
+  panel = "surface",            -- g1, the drawer's face
   well = "shadow",              -- g0, recessed trays
+  inv = "surface",              -- ink on an inverted (light) face
+  invDim = "surface/0.7",
+  clear = "#00000000",
+}
+
+-- Type scale. Larger display numbers in the calculator auto-fit and stay local to it.
+S.FS = {
+  xs = 10.5,     -- captions, badges
+  sm = 11.5,     -- secondary mono readouts
+  md = 12.5,     -- small labels
+  body = 13,     -- list rows
+  lg = 14,       -- search fields, tabs
+  xl = 15,       -- headers, the bar clock
+  title = 16,    -- calendar month
+  icon = 20,     -- emoji preview
+  emoji = 24,
+  big = 34,      -- large readouts
 }
 
 S.KEY_H = 34
+S.EDGE_GAP = 6         -- matches Hyprland's gaps_out
+S.DRAWER_W = 380
+
+S.PROFILE_LABEL = { ["power-saver"] = "Saver", balanced = "Balanced", performance = "Performance" }
+S.PROFILE_GLYPH = { ["power-saver"] = "leaf", balanced = "gauge", performance = "rocket" }
+
+function S.barThickness()
+  return tonumber(noctalia.getSetting("bar.default.thickness")) or 38
+end
 
 local fontsLoaded = false
 function S.fonts()
@@ -31,18 +58,9 @@ function S.run(argv)
   noctalia.runAsync(argv)
 end
 
--- Hyprland dispatch. 0.57+ (Lua config) takes a dispatcher expression such as
--- hl.dsp.focus({ workspace = 2 }); older releases take "dispatcher args". Try the
--- new form first and fall back when hyprctl reports an error.
-function S.dispatch(luaExpr, legacyArgs)
-  noctalia.runAsync({ "hyprctl", "dispatch", luaExpr }, function(r)
-    local out = string.lower((r.stdout or "") .. (r.stderr or ""))
-    if r.exitCode ~= 0 or string.find(out, "error", 1, true) then
-      local argv = { "hyprctl", "dispatch" }
-      for _, a in legacyArgs do table.insert(argv, a) end
-      noctalia.runAsync(argv)
-    end
-  end, 3000)
+-- Hyprland dispatch: takes a dispatcher expression such as hl.dsp.focus({ workspace = 2 }).
+function S.dispatch(luaExpr)
+  noctalia.runAsync({ "hyprctl", "dispatch", luaExpr })
 end
 
 -- Lua string literal for a dispatcher argument.
@@ -50,36 +68,73 @@ function S.lstr(s)
   return '"' .. string.gsub(string.gsub(s, "\\", "\\\\"), '"', '\\"') .. '"'
 end
 
-function S.panel(context)
-  local argv = { "noctalia", "msg", "panel-toggle", "control-center" }
-  if context then table.insert(argv, context) end
-  noctalia.runAsync(argv)
-end
-
--- Decode a JSON value published by the service; nil when absent or invalid.
-function S.read(key)
-  local raw = noctalia.state.get(key)
+-- JSON string -> value; nil when absent or invalid.
+function S.decode(raw)
   if type(raw) ~= "string" then return raw end
   local v = noctalia.json.decode(raw)
   return v
 end
 
+-- Read a value published by the service.
+function S.read(key)
+  return S.decode(noctalia.state.get(key))
+end
+
 function S.watch(key, fn)
-  noctalia.state.watch(key, function(raw)
-    if type(raw) == "string" then
-      fn(noctalia.json.decode(raw))
-    else
-      fn(raw)
+  noctalia.state.watch(key, function(raw) fn(S.decode(raw)) end)
+end
+
+-- Hover state for flat keys and rows. local H = S.hover(function() render() end);
+-- then onHover = H.fn(id), and H.id is whatever the pointer is on.
+function S.hover(redraw)
+  local H = { id = nil }
+  function H.fn(id)
+    return function(st)
+      if st == "true" then H.id = id elseif H.id == id then H.id = nil end
+      redraw()
     end
-  end)
+  end
+  return H
+end
+
+-- Split "a\n--\nb\n--\nc" command output into its sections.
+function S.parts(text)
+  local parts = {}
+  for chunk in string.gmatch((text or "") .. "\n--\n", "(.-)\n%-%-\n") do table.insert(parts, chunk) end
+  return parts
+end
+
+-- nmcli -t output escapes ':' and '\' with a backslash.
+function S.terse(line)
+  local fields, cur, i = {}, {}, 1
+  while i <= #line do
+    local c = string.sub(line, i, i)
+    if c == "\\" and i < #line then
+      table.insert(cur, string.sub(line, i + 1, i + 1)); i += 2
+    elseif c == ":" then
+      table.insert(fields, table.concat(cur)); cur = {}; i += 1
+    else
+      table.insert(cur, c); i += 1
+    end
+  end
+  table.insert(fields, table.concat(cur))
+  return fields
+end
+
+-- "now", "5m", "3h", "2d"
+function S.ago(t)
+  local d = math.max(0, os.time() - (t or 0))
+  if d < 60 then return "now" end
+  if d < 3600 then return `{d // 60}m` end
+  if d < 86400 then return `{d // 3600}h` end
+  return `{d // 86400}d`
 end
 
 -- A flat, square-cornered cell. Nothing at rest: just the content on the bar.
--- Hover fills the cell one shade lighter; pressed sinks it to the darkest well.
--- o: { key, hovered, pressed, onClick, onHover, tooltip, gap, paddingH, minWidth, height }
+-- Hover fills the cell one shade lighter.
+-- o: { key, hovered, onClick, onHover, tooltip, gap, paddingH, minWidth, height }
 function S.key(o, children)
   local hovered = o.hovered == true
-  local pressed = o.pressed == true
   local h = o.height or S.KEY_H
   return ui.row({
     key = o.key,
@@ -87,7 +142,7 @@ function S.key(o, children)
     minWidth = o.minWidth or h,
     paddingH = o.paddingH or 10,
     radius = 0,
-    fill = if pressed then S.C.well elseif hovered then S.C.keyHover else "#00000000",
+    fill = if hovered then S.C.keyHover else S.C.clear,
     align = "center",
     justify = "center",
     gap = o.gap or 7,
@@ -111,7 +166,7 @@ function S.label(text, o)
   return ui.label({
     text = text,
     color = o.color or S.C.sub,
-    fontSize = o.size or 13,
+    fontSize = o.size or S.FS.body,
     fontFamily = o.font or S.sans,
     fontWeight = o.weight,
     maxWidth = o.maxWidth,
@@ -148,14 +203,14 @@ end
 
 -- Small uppercase mono caption for section labels and states.
 function S.caption(text, color)
-  return ui.label({ text = string.upper(text), fontFamily = S.mono, fontSize = 10.5, color = color or S.C.dim })
+  return ui.label({ text = string.upper(text), fontFamily = S.mono, fontSize = S.FS.xs, color = color or S.C.dim })
 end
 
 -- Panel header: glyph, title, then whatever controls go on the right.
 function S.header(glyph, title, right)
   local kids = {
     ui.glyph({ name = glyph, size = 18, color = S.C.text }),
-    ui.label({ text = title, fontFamily = S.sans, fontSize = 15, color = S.C.text, flexGrow = 1 }),
+    ui.label({ text = title, fontFamily = S.sans, fontSize = S.FS.xl, color = S.C.text, flexGrow = 1 }),
   }
   for _, k in right or {} do table.insert(kids, k) end
   return ui.row({ align = "center", gap = 10, height = 34 }, kids)
@@ -171,7 +226,7 @@ function S.item(o, children)
     gap = 10,
     align = "center",
     radius = 0,
-    fill = if o.selected then S.C.well elseif o.hovered then S.C.keyHover else "#00000000",
+    fill = if o.selected then S.C.well elseif o.hovered then S.C.keyHover else S.C.clear,
     onClick = o.onClick,
     onHover = o.onHover,
     tooltip = o.tooltip,
@@ -187,20 +242,52 @@ function S.exec(argv, timeoutMs, cb)
   end, timeoutMs or 15000)
 end
 
--- Turn Do Not Disturb on or off through the service (explicit, never a toggle).
-function S.setDnd(on)
-  noctalia.state.set("graphite.dndSet", (if on then "on:" else "off:") .. tostring(noctalia.nowMs()))
-end
-
--- Ask the service to re-poll something right away (e.g. "net", "bt", "power").
--- Ask the service to switch something (caffeine, night, dnd, bt, wifi) so the
--- bar, panels and keybinds all see the same state.
+-- Flip something through the service, so the bar, panels and keybinds all see it:
+-- caffeine, night, dnd, bt, wifi [on|off|toggle], profile [<name>|next], mute out|in.
 function S.svc(event, payload)
-  noctalia.runAsync({ "noctalia", "msg", "plugin", "vyeos/graphite:service", "all", event, payload or "toggle" })
+  noctalia.state.set("graphite.cmd", `{event}:{payload or "toggle"}:{noctalia.nowMs()}`)
 end
 
+-- Ask the service for a fresh read ("net", "bt", "power", "gpu", "vol").
 function S.poke(what)
   noctalia.state.set("graphite.poke", what .. ":" .. tostring(noctalia.nowMs()))
+end
+
+-- Search line shared by the floating panels.
+-- o: { glyph, key, value, placeholder, count, onChange, onSubmit, right = { extra nodes } }
+function S.search(o)
+  local kids = {
+    ui.glyph({ name = o.glyph or "search", size = 17, color = S.C.sub }),
+    ui.input({
+      key = o.key,
+      value = o.value,
+      placeholder = o.placeholder,
+      frameVisible = false,
+      focus = true,
+      fontSize = S.FS.lg,
+      controlSize = "sm",
+      flexGrow = 1,
+      onChange = o.onChange,
+      onSubmit = o.onSubmit,
+    }),
+    S.caption(tostring(o.count)),
+  }
+  for _, k in o.right or {} do table.insert(kids, k) end
+  return ui.row({ align = "center", gap = 10, height = 34 }, kids)
+end
+
+-- Short result line under a panel's list.
+function S.status(text)
+  return ui.label({ text = text, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.sub, maxLines = 2 })
+end
+
+-- Centered glyph and line, for loading and empty lists.
+function S.placeholder(glyph, text, o)
+  o = o or {}
+  return ui.column({ height = o.height or 120, align = "center", justify = "center", gap = o.gap or 8 }, {
+    ui.glyph({ name = glyph, size = o.size or 26, color = S.C.dim }),
+    ui.label({ text = text, color = S.C.dim, fontFamily = S.sans }),
+  })
 end
 
 -- ── List navigation ─────────────────────────────────────────────────────────

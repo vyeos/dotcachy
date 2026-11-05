@@ -22,9 +22,12 @@ local files = {}
 local shown = {}
 local thumbs = {}   -- path -> thumb path (once made)
 local pending = {}
+local queue = {}    -- thumbnails still to make; at most MAX_JOBS run at once
+local running = 0
+local MAX_JOBS = 2
 local query = ""
 local sel = 1
-local hovered = nil
+local H = S.hover(function() render() end)
 local opens = 0
 local lastClick = { i = 0, t = 0 }
 local current = nil
@@ -35,6 +38,21 @@ local function thumbFor(path)
   return thumbDir .. "/" .. name .. ".jpg"
 end
 
+function pump()
+  while running < MAX_JOBS and #queue > 0 do
+    local job = table.remove(queue, 1)
+    running += 1
+    noctalia.runAsync({ "magick", job.path .. "[0]", "-thumbnail", `{TW * 2}x{TH * 2}^`, "-gravity", "center",
+      "-extent", `{TW * 2}x{TH * 2}`, "-quality", "85", job.thumb }, function(r)
+      running -= 1
+      pending[job.path] = nil
+      if r.exitCode == 0 then thumbs[job.path] = job.thumb end
+      pump()
+      render()
+    end, 30000)
+  end
+end
+
 local function ensureThumb(path)
   if thumbs[path] or pending[path] then return end
   local t = thumbFor(path)
@@ -42,12 +60,8 @@ local function ensureThumb(path)
   local src = noctalia.fileInfo(path)
   if info and src and info.mtime >= src.mtime then thumbs[path] = t; return end
   pending[path] = true
-  noctalia.runAsync({ "magick", path .. "[0]", "-thumbnail", `{TW * 2}x{TH * 2}^`, "-gravity", "center",
-    "-extent", `{TW * 2}x{TH * 2}`, "-quality", "85", t }, function(r)
-    pending[path] = nil
-    if r.exitCode == 0 then thumbs[path] = t end
-    render()
-  end, 30000)
+  table.insert(queue, { path = path, thumb = t })
+  pump()
 end
 
 local function scan()
@@ -63,7 +77,7 @@ local function scan()
     end
   end
   table.sort(files, function(a, b) return a.lname < b.lname end)
-  current = noctalia.wallpaperPath("eDP-2") or noctalia.getSetting("wallpaper.default.path")
+  current = noctalia.wallpaperPath(noctalia.focusedOutputName() or "") or noctalia.getSetting("wallpaper.default.path")
 end
 
 local function compute()
@@ -104,19 +118,16 @@ local function tile(i, f)
         sel = i; render()
       end
     end,
-    onHover = function(st)
-      hovered = if st == "true" then i elseif hovered == i then nil else hovered
-      render()
-    end,
+    onHover = H.fn(i),
   }, {
     ui.row({ width = TW + 6, height = TH + 6, padding = 3, radius = 0,
-      fill = if isSel then S.C.text elseif hovered == i then S.C.keyHover else "#00000000" }, { img }),
+      fill = if isSel then S.C.text elseif H.id == i then S.C.keyHover else S.C.clear }, { img }),
     ui.row({ width = TW + 6, height = 16, gap = 6, align = "center", paddingH = 3,
-      fill = "#00000000" }, {
-      ui.label({ text = f.name, fontFamily = S.mono, fontSize = 10.5, maxWidth = TW - 24, maxLines = 1,
+      fill = S.C.clear }, {
+      ui.label({ text = f.name, fontFamily = S.mono, fontSize = S.FS.xs, maxWidth = TW - 24, maxLines = 1,
         color = if isSel then S.C.text else S.C.dim }),
       ui.spacer({ flexGrow = 1 }),
-      ui.box({ width = 7, height = 7, radius = 0, fill = if isCur then S.C.text else "#00000000" }),
+      ui.box({ width = 7, height = 7, radius = 0, fill = if isCur then S.C.text else S.C.clear }),
     }),
   })
 end
@@ -137,21 +148,13 @@ function render()
   end
   local cur = shown[sel]
   panel.render(ui.column({ gap = 8, flexGrow = 1, align = "stretch" }, {
-    ui.row({ align = "center", gap = 10, height = 34 }, {
-      ui.glyph({ name = "photo", size = 17, color = S.C.sub }),
-      ui.input({
-        key = "q-" .. opens, value = query, placeholder = "Filter wallpapers",
-        frameVisible = false, focus = true, fontSize = 14, controlSize = "sm", flexGrow = 1,
-        onChange = function(v) query = v or ""; sel = 1; compute(); render() end,
-        onSubmit = function() apply(shown[sel]) end,
-      }),
-      S.caption(tostring(#shown)),
-    }),
+    S.search({ glyph = "photo", key = "q-" .. opens, value = query, placeholder = "Filter wallpapers", count = #shown, onSubmit = function() apply(shown[sel]) end,
+      onChange = function(v) query = v or ""; sel = 1; compute(); render() end }),
     S.hline("h1"),
     ui.scroll({ key = "grid", flexGrow = 1, gap = GAP, revealKey = "t-" .. sel }, rows),
     S.hline("h2"),
     ui.row({ align = "center", gap = 14, height = 20 }, {
-      ui.label({ text = dir or "", fontFamily = S.mono, fontSize = 10.5, color = S.C.dim, maxWidth = 300, maxLines = 1 }),
+      ui.label({ text = dir or "", fontFamily = S.mono, fontSize = S.FS.xs, color = S.C.dim, maxWidth = 300, maxLines = 1 }),
       ui.spacer({ flexGrow = 1 }),
       S.caption(if cur and cur.path == current then "current" else ""),
       S.caption("↵ apply"),
@@ -162,7 +165,7 @@ end
 local function move(d)
   if #shown == 0 then return end
   sel = S.step(sel, d, #shown, COLS)
-  hovered = nil
+  H.id = nil
   render()
 end
 
@@ -174,8 +177,7 @@ function onKey(key, pressed)
   if R.key(key, pressed) then return end
   if pressed == false then return end
   local k = string.lower(tostring(key))
-  if false then
-  elseif k == "return" or k == "kp_enter" then apply(shown[sel])
+  if k == "return" or k == "kp_enter" then apply(shown[sel])
   end
 end
 
@@ -183,7 +185,7 @@ function onOpen(_context)
   R.stop()
   opens += 1
   query = ""
-  hovered = nil
+  H.id = nil
   scan()
   compute()
   sel = 1

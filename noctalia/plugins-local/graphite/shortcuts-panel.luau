@@ -21,8 +21,8 @@ local shown = {}
 local query = ""
 local opens = 0
 local sel = 1
-local hovered = nil
-local hoveredCat = nil
+local H = S.hover(function() render() end)
+local HCat = S.hover(function() render() end)
 
 -- Short labels for the category strip; unknown groups use their own name.
 local SHORT = {
@@ -71,14 +71,14 @@ end
 local function scan()
   if not outPath then return end
   noctalia.runAsync({ "python3", script, bindsLua, outPath }, function(r)
-    if r.exitCode == 0 then load(); compute(); render() end
+    if r.exitCode == 0 and noctalia.string.trim(r.stdout or "") ~= "fresh" then load(); compute(); render() end
   end, 10000)
 end
 
 -- A key cap: square, recessed into the panel, mono ink.
 local function cap(text, onWell)
   return ui.row({ height = 22, minWidth = 22, paddingH = 7, radius = 0, fill = if onWell then S.C.key else S.C.well, align = "center", justify = "center" }, {
-    ui.label({ text = text, fontFamily = S.mono, fontSize = 11, color = S.C.text }),
+    ui.label({ text = text, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.text }),
   })
 end
 
@@ -91,7 +91,7 @@ end
 -- Jump the selection to the first row of a group (in the current results);
 -- the list scrolls just enough to show its title.
 local function jump(g)
-  if g and g.first then sel = g.first; hovered = nil; render() end
+  if g and g.first then sel = g.first; H.id = nil; render() end
 end
 
 -- Category key: label over an underline that marks the selection's group.
@@ -99,21 +99,18 @@ end
 function catKey(g, cur)
   local active = g.name == cur
   local empty = g.first == nil
-  local lit = active or (hoveredCat == g.name and not empty)
+  local lit = active or (HCat.id == g.name and not empty)
   return ui.column({
     key = "cat-" .. g.name,
     height = 30, paddingH = 8, gap = 0, align = "center", justify = "end",
-    fill = if hoveredCat == g.name and not active and not empty then S.C.keyHover else "#00000000",
+    fill = if HCat.id == g.name and not active and not empty then S.C.keyHover else S.C.clear,
     onClick = function() jump(g) end,
-    onHover = function(st)
-      hoveredCat = if st == "true" then g.name elseif hoveredCat == g.name then nil else hoveredCat
-      render()
-    end,
+    onHover = HCat.fn(g.name),
   }, {
     ui.row({ flexGrow = 1, align = "center", justify = "center" }, {
       S.caption(SHORT[g.name] or g.name, if lit then S.C.text elseif empty then S.C.faint else S.C.dim),
     }),
-    ui.box({ height = 2, width = 24, radius = 0, fill = if active then S.C.text else "#00000000" }),
+    ui.box({ height = 2, width = 24, radius = 0, fill = if active then S.C.text else S.C.clear }),
   })
 end
 
@@ -123,21 +120,18 @@ local function row(i, b)
   local isSel = sel == i
   local keys = {}
   for k, key in b.keys do
-    if k > 1 then table.insert(keys, ui.label({ text = "+", fontFamily = S.mono, fontSize = 10, color = S.C.faint })) end
+    if k > 1 then table.insert(keys, ui.label({ text = "+", fontFamily = S.mono, fontSize = S.FS.xs, color = S.C.faint })) end
     table.insert(keys, cap(key, isSel))
   end
   return S.item({
     key = "b" .. i,
     height = ROW_H,
     selected = isSel,
-    hovered = hovered == i,
+    hovered = H.id == i,
     onClick = function() sel = i; render() end,
-    onHover = function(st)
-      hovered = if st == "true" then i elseif hovered == i then nil else hovered
-      render()
-    end,
+    onHover = H.fn(i),
   }, {
-    ui.label({ text = b.desc, fontFamily = S.sans, fontSize = 13, color = if isSel then S.C.text else S.C.sub, flexGrow = 1, maxWidth = 300, maxLines = 1 }),
+    ui.label({ text = b.desc, fontFamily = S.sans, fontSize = S.FS.body, color = if isSel then S.C.text else S.C.sub, flexGrow = 1, maxWidth = 300, maxLines = 1 }),
     ui.row({ gap = 4, align = "center" }, keys),
   })
 end
@@ -166,21 +160,8 @@ function render()
     }))
   end
   panel.render(ui.column({ gap = 8, flexGrow = 1, align = "stretch" }, {
-    ui.row({ align = "center", gap = 10, height = 34 }, {
-      ui.glyph({ name = "keyboard", size = 17, color = S.C.sub }),
-      ui.input({
-        key = "q-" .. opens,
-        value = query,
-        placeholder = "Search shortcuts",
-        frameVisible = false,
-        focus = true,
-        fontSize = 14,
-        controlSize = "sm",
-        flexGrow = 1,
-        onChange = function(v) query = v or ""; sel = 1; compute(); render() end,
-      }),
-      S.caption(tostring(#shown)),
-    }),
+    S.search({ glyph = "keyboard", key = "q-" .. opens, value = query, placeholder = "Search shortcuts", count = #shown,
+      onChange = function(v) query = v or ""; sel = 1; compute(); render() end }),
     ui.row({ gap = 0, align = "center", justify = "space_between" }, strip),
     S.hline("h1"),
     ui.scroll({ key = "list", flexGrow = 1, gap = 0, revealKey = reveal }, rows),
@@ -198,7 +179,7 @@ end
 local function move(d)
   if #shown == 0 then return end
   sel = S.step(sel, d, #shown)
-  hovered = nil
+  H.id = nil
   render()
 end
 
@@ -232,8 +213,8 @@ function onOpen(context)
   R.stop()
   opens += 1
   sel = 1
-  hovered = nil
-  hoveredCat = nil
+  H.id = nil
+  HCat.id = nil
   query = ""
   compute()
   render()
@@ -249,4 +230,3 @@ end
 load()
 compute()
 render()
-scan()

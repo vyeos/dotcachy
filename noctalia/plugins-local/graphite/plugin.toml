@@ -1,26 +1,27 @@
-# Graphite Bar - a clean, minimal monochrome top bar of etched keys.
+# Graphite - the whole shell in one monochrome plugin: flat bar keys, panels, launcher,
+# clipboard, notifications, calculator and lock screen row.
 #
-# One headless service collects Hyprland, network, Bluetooth, battery and
-# long-running-task state and publishes it through noctalia.state. Each bar
-# widget below is a thin client that renders one part of the bar.
+# One headless service publishes state through noctalia.state; events.py feeds it
+# changes as they happen. Each bar widget and panel is a thin client of that state.
 #
-#   left    vyeos/graphite:logo  vyeos/graphite:workspaces  vyeos/graphite:window
-#   center  vyeos/graphite:clock
-#   right   vyeos/graphite:status  vyeos/graphite:tasks  vyeos/graphite:wifi  vyeos/graphite:bluetooth
-#           vyeos/graphite:audio  vyeos/graphite:gpu  vyeos/graphite:battery  vyeos/graphite:notifications
+#   left    logo  workspaces  window
+#   center  clock
+#   right   status  tasks  wifi  bluetooth  audio  gpu  battery  notifications
 #
-# Needs: Hyprland (hyprctl), python3 (event socket), NetworkManager (nmcli), bluetoothctl.
+# Needs: Hyprland, python3, NetworkManager (nmcli), BlueZ (bluetoothctl), PipeWire (wpctl,
+# pactl), UPower + power-profiles-daemon (upower, busctl), glib2 (gdbus, gtk-launch), dbus,
+# wl-clipboard, brightnessctl, supergfxctl, ImageMagick (wallpaper thumbnails).
 
 id = "vyeos/graphite"
-name = "Graphite Bar"
+name = "Graphite"
 version = "1.0.0"
 plugin_api = 39
 author = "vyeos"
 license = "MIT"
 dependencies = []
 tags = ["bar", "theme", "hyprland"]
-icon = "pencil"
-description = "Minimal monochrome graphite top bar of etched keys: workspaces, window title, clock, a hover drawer for long-running apps, Wi-Fi, Bluetooth and battery."
+icon = "hexagon"
+description = "Monochrome shell: flat bar, panels, launcher, clipboard, notifications, calculator and lock screen row."
 
 # Process names watched by the tasks drawer, comma separated (as shown by `ps -eo comm`).
 [[setting]]
@@ -47,50 +48,74 @@ entry = "service.luau"
 [[widget]]
 id = "logo"
 entry = "logo.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "workspaces"
 entry = "workspaces.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "window"
 entry = "window.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "clock"
 entry = "clock.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "status"
 entry = "status.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "tasks"
 entry = "tasks.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "wifi"
 entry = "wifi.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "bluetooth"
 entry = "bluetooth.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "battery"
 entry = "battery.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "audio"
 entry = "audio.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "gpu"
 entry = "gpu.luau"
+[widget.actions]
+middle = "none"
 
 [[widget]]
 id = "notifications"
 entry = "notifications.luau"
+[widget.actions]
+middle = "none"
 
 # Panels attached under their bar keys (open where you click).
 [[panel]]
@@ -147,10 +172,10 @@ height = 140
 placement = "floating"
 position = "center"
 keyboard_focus = "exclusive"
-capture_keys = ["1", "2", "3", "4", "5", "Left", "Right", "Tab", "Return", "KP_Enter", "Escape", "h", "l"]
+capture_keys = ["1", "2", "3", "4", "5", "Left", "Right", "Tab", "shift+Tab", "Return", "KP_Enter", "Escape", "h", "l"]
 
 # Graphite control center: a single Home page. Opened by right-clicking the clock
-# or by right-clicking the logo.
+# or the logo.
 [[panel]]
 id = "cc"
 entry = "cc.luau"
@@ -160,7 +185,7 @@ placement = "attached"
 position = "center"
 open_near_click = false
 
-# Calendar: right click on the clock.
+# Calendar: click on the clock.
 [[panel]]
 id = "calendar"
 entry = "calendar-panel.luau"
@@ -193,7 +218,7 @@ keyboard_focus = "exclusive"
 capture_keys = ["Up", "Down", "Left", "Right", "Return", "KP_Enter", "Tab", "shift+Tab"]
 
 # Clipboard history (SUPER + V): list + preview. History kept by clip.py,
-# fed from `wl-paste --watch` in service.luau.
+# fed from `wl-paste --watch` in events.py.
 [[panel]]
 id = "clip"
 entry = "clip-panel.luau"

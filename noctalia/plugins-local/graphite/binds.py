@@ -5,10 +5,11 @@ Usage: binds.py <binds.lua> <out.json>
 
 Each hl.bind(...) becomes {group, keys: [..], desc}. Groups come from the big
 "---- NAME ----" headers. Binds inside `for i = 1, NUM_WPM` loops collapse to a
-single "1-0" row. Descriptions come from the table below; an unknown action
+single "1-0" row, since their keys and descriptions come out identical. Descriptions come from the table below; an unknown action
 falls back to the line's trailing comment, then to the raw dispatcher.
 """
 import json
+import os
 import re
 import sys
 
@@ -78,7 +79,7 @@ DESCS = [
     (r"night toggle", "Toggle night light"),
     (r"\"bt toggle", "Toggle Bluetooth"),
     (r"\"wifi toggle", "Toggle Wi-Fi"),
-    (r"power-cycle", "Cycle power profile"),
+    (r"profile next", "Cycle power profile"),
     (r"dnd toggle", "Toggle do not disturb"),
     (r"volume-up", "Volume up"),
     (r"volume-down", "Volume down"),
@@ -129,11 +130,20 @@ def describe(action, comment):
     return re.sub(r"\s+", " ", action)[:60]
 
 
+def fresh(src, out):
+    try:
+        return os.path.getmtime(out) >= max(os.path.getmtime(src), os.path.getmtime(os.path.abspath(__file__)))
+    except OSError:
+        return False
+
+
 def main():
     src, out = sys.argv[1], sys.argv[2]
+    if fresh(src, out):
+        print("fresh")
+        return
     lines = open(src, encoding="utf-8").read().split("\n")
     group = "General"
-    in_loop = 0
     stmt = None
     depth = 0
     binds = []
@@ -151,10 +161,6 @@ def main():
                     if line.lstrip("-# ").startswith(pre):
                         group = name
                 continue
-            if re.match(r"^for .*NUM_WPM", line):
-                in_loop += 1
-            if line == "end" and in_loop:
-                in_loop -= 1
             if "hl.bind(" not in line:
                 continue
             stmt, depth = "", 0
@@ -193,7 +199,6 @@ def main():
         binds.append({"group": group, "keys": keys, "desc": desc})
     with open(out + ".tmp", "w", encoding="utf-8") as f:
         json.dump(binds, f, ensure_ascii=False)
-    import os
     os.replace(out + ".tmp", out)
 
 

@@ -2,7 +2,6 @@ local mainMod = "SUPER"
 local noctCall = "noctalia msg "
 local graphite = noctCall .. "plugin vyeos/graphite:service all " -- graphite bar service IPC
 local widget = noctCall .. "plugin vyeos/graphite:" -- a bar key; "<key> all panel" opens its panel under it
-local launchPrefix = "uwsm app -- " -- if you are not using UWSM, make this empty (e.g. "")
 
 -- AZERTY fix: the number-row keys emit symbols (& é " ' ...) without Shift, so
 -- binding to the digit characters fails. Bind by physical keycode instead.
@@ -19,7 +18,7 @@ end
 hl.bind(mainMod .. " + SHIFT + Escape", hl.dsp.exec_cmd("hyprctl kill")) -- click a window to kill it
 hl.bind(mainMod .. " + W", hl.dsp.window.close())
 hl.bind(mainMod .. " + ALT + Space", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + CONTROL+ F", hl.dsp.window.fullscreen({ mode = 1 }))
+hl.bind(mainMod .. " + CONTROL + F", hl.dsp.window.fullscreen({ mode = 1 }))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
 
@@ -88,13 +87,13 @@ end, { repeating = true })
 ---- LAUNCHER ----
 ------------------
 
-hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(launchPrefix .. TERMINAL))
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(launchPrefix .. FILE_MANAGER))
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(launchPrefix .. EDITOR))
+hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(TERMINAL))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(FILE_MANAGER))
+hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(EDITOR))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:calc")) -- graphite calculator
 hl.bind("XF86Calculator", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:calc"))
-hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(launchPrefix .. BROWSER))
-hl.bind("CONTROL + SHIFT + Escape", hl.dsp.exec_cmd(launchPrefix .. TERMINAL .. " --class graphite-btop -e env LC_ALL=en_IN.UTF-8 btop")) -- floats (windowrules.lua)
+hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(BROWSER))
+hl.bind("CONTROL + SHIFT + Escape", hl.dsp.exec_cmd(TERMINAL .. " --class graphite-btop -e env LC_ALL=en_IN.UTF-8 btop")) -- floats (windowrules.lua)
 hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd(noctCall .. "settings-toggle"))
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(widget .. "clock all panel")) -- graphite control center
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:session-panel"))
@@ -117,7 +116,7 @@ hl.bind(mainMod .. " + ALT + C", hl.dsp.exec_cmd(graphite .. "caffeine toggle"))
 hl.bind(mainMod .. " + ALT + N", hl.dsp.exec_cmd(graphite .. "night toggle"))
 hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(graphite .. "bt toggle"))
 hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd(graphite .. "wifi toggle"))
-hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd(noctCall .. "power-cycle"))
+hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd(graphite .. "profile next"))
 hl.bind(mainMod .. " + ALT + comma", hl.dsp.exec_cmd(graphite .. "dnd toggle"))
 
 ---------------------------
@@ -174,7 +173,7 @@ hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graph
 -- Absolute
 for i = 1, NUM_WPM do
 	local key = i % 10
-	hl.bind(mainMod .. " +  + " .. digitCode(key), hl.dsp.focus({ workspace = i }))
+	hl.bind(mainMod .. " + " .. digitCode(key), hl.dsp.focus({ workspace = i }))
 end
 -- Relative
 for i = 1, NUM_WPM do
@@ -188,8 +187,8 @@ hl.bind(mainMod .. " + CONTROL + Left", hl.dsp.focus({ workspace = "m-1" }))
 hl.bind(mainMod .. " + CONTROL + Down", hl.dsp.focus({ workspace = "emptym" }))
 
 -- Scroll through existing workspaces & monitors
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "m-1" }))
-hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "m+1" }))
+hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "m+1" }))
+hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "m-1" }))
 hl.bind(mainMod .. " + CONTROL + mouse_up", hl.dsp.focus({ workspace = "m-1" }))
 hl.bind(mainMod .. " + CONTROL + mouse_down", hl.dsp.focus({ workspace = "m+1" }))
 

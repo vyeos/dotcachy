@@ -94,6 +94,12 @@ def main():
             # motion_absolute(time, x, y, x_extent, y_extent)
             c.send(5, 1, struct.pack("<IIIII", ms(), int(x), int(y), EXT_W, EXT_H))
             frame()
+        elif parts[0] == "wheel":
+            c.send(5, 3, struct.pack("<IIi", ms(), 0, int(float(parts[1]) * 256))); frame()
+        elif parts[0] == "mclick":
+            c.send(5, 2, struct.pack("<III", ms(), 0x112, 1)); frame()
+            time.sleep(0.05)
+            c.send(5, 2, struct.pack("<III", ms(), 0x112, 0)); frame()
         elif parts[0] == "click":
             c.send(5, 2, struct.pack("<III", ms(), 0x110, 1)); frame()
             time.sleep(0.05)

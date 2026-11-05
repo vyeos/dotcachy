@@ -6,12 +6,14 @@
 local S = require("./style.luau")
 S.fonts()
 
-local powered = false
+local powered = (S.read("graphite.bt") or {}).powered == true
+local isOpen = false
+local loaded = false    -- the device list has been read at least once
 local devices = {}      -- { mac, name, paired, connected }
 local scanning = false
 local busy = nil        -- mac being worked on
 local status = ""
-local hovered = nil
+local H = S.hover(function() render() end)
 
 local function glyphFor(name)
   local n = string.lower(name or "")
@@ -30,19 +32,17 @@ end
 local refresh
 
 refresh = function()
-  local cmd = "bluetoothctl show 2>/dev/null | grep -m1 'Powered:'; echo '--'; bluetoothctl devices 2>/dev/null; echo '--'; bluetoothctl devices Paired 2>/dev/null; echo '--'; bluetoothctl devices Connected 2>/dev/null"
+  local cmd = "bluetoothctl devices 2>/dev/null; echo '--'; bluetoothctl devices Paired 2>/dev/null; echo '--'; bluetoothctl devices Connected 2>/dev/null"
   noctalia.runAsync(cmd, function(r)
-    local parts = {}
-    for chunk in string.gmatch((r.stdout or "") .. "\n--\n", "(.-)\n%-%-\n") do table.insert(parts, chunk) end
-    powered = string.find(parts[1] or "", "yes", 1, true) ~= nil
+    local parts = S.parts(r.stdout)
     local function macs(text)
       local set = {}
       for mac in string.gmatch(text or "", "Device (%x%x:%x%x:%x%x:%x%x:%x%x:%x%x)") do set[mac] = true end
       return set
     end
-    local paired, connected = macs(parts[3]), macs(parts[4])
+    local paired, connected = macs(parts[2]), macs(parts[3])
     local list = {}
-    for line in string.gmatch(parts[2] or "", "[^\n]+") do
+    for line in string.gmatch(parts[1] or "", "[^\n]+") do
       local mac, name = string.match(line, "^Device (%x%x:%x%x:%x%x:%x%x:%x%x:%x%x) (.+)$")
       if mac then
         -- unnamed scan results show their MAC as the name; keep them, they are pairable
@@ -55,6 +55,7 @@ refresh = function()
       return string.lower(a.name) < string.lower(b.name)
     end)
     devices = list
+    loaded = true
     render()
   end, 8000)
 end
@@ -102,30 +103,22 @@ function update()
 end
 
 local function setPower(on)
-  powered = on
-  render()
-  S.exec({ "bluetoothctl", "power", if on then "on" else "off" }, 10000, function(ok, msg)
-    if not ok then status = msg end
-    S.poke("bt")
-    refresh()
-  end)
+  if on == powered then return end -- echo of a programmatic change
+  S.svc("bt", if on then "on" else "off")
 end
 
 local function devRow(d)
   local state = if busy == d.mac then "working" elseif d.connected then "connected" elseif d.paired then "paired" else "pair"
   return S.item({
     key = "dev-" .. d.mac,
-    hovered = hovered == d.mac,
+    hovered = H.id == d.mac,
     selected = d.connected,
     tooltip = d.mac,
-    onHover = function(st)
-      hovered = if st == "true" then d.mac elseif hovered == d.mac then nil else hovered
-      render()
-    end,
+    onHover = H.fn(d.mac),
     onClick = function() if busy == nil then act(d) end end,
   }, {
     ui.glyph({ name = glyphFor(d.name), size = 16, color = if d.connected then S.C.text else S.C.sub }),
-    ui.label({ text = d.name, fontFamily = S.sans, fontSize = 13, color = if d.connected then S.C.text else "on_surface/0.85", flexGrow = 1, maxWidth = 200, maxLines = 1 }),
+    ui.label({ text = d.name, fontFamily = S.sans, fontSize = S.FS.body, color = if d.connected then S.C.text else S.C.body, flexGrow = 1, maxWidth = 200, maxLines = 1 }),
     S.caption(state, if d.connected then S.C.sub else S.C.dim),
   })
 end
@@ -133,10 +126,9 @@ end
 function render()
   local rows = {}
   if not powered then
-    table.insert(rows, ui.column({ height = 120, align = "center", justify = "center", gap = 8 }, {
-      ui.glyph({ name = "bluetooth-off", size = 26, color = S.C.dim }),
-      ui.label({ text = "Bluetooth is off", color = S.C.dim, fontFamily = S.sans }),
-    }))
+    table.insert(rows, S.placeholder("bluetooth-off", "Bluetooth is off"))
+  elseif not loaded then
+    table.insert(rows, S.placeholder("bluetooth", "Reading devices…"))
   else
     local mine, nearby = {}, {}
     for _, d in devices do
@@ -168,17 +160,29 @@ function render()
     ui.scroll({ flexGrow = 1, gap = 1 }, rows),
   }
   if status ~= "" then
-    table.insert(body, ui.label({ text = status, fontFamily = S.mono, fontSize = 11, color = S.C.sub, maxLines = 2 }))
+    table.insert(body, S.status(status))
   end
   panel.render(ui.column({ flexGrow = 1, gap = 10, align = "stretch" }, body))
 end
 
+-- The service owns the radio; follow it and re-read the list when it changes.
+S.watch("graphite.bt", function(v)
+  if type(v) ~= "table" then return end
+  local was = powered
+  powered = v.powered == true
+  if isOpen and (powered ~= was or scanning == false) then refresh() else render() end
+end)
+
 function onOpen(_context)
+  isOpen = true
   status = ""
+  local v = S.read("graphite.bt")
+  if type(v) == "table" then powered = v.powered == true end
   refresh()
 end
 
 function onClose()
+  isOpen = false
   panel.setWantsSecondTicks(false)
 end
 

@@ -9,7 +9,7 @@
 -- hl.env("LIBVA_DRIVER_NAME", "nvidia") -- Hardware acceleration on NVIDIA GPUs
 -- hl.env("__GL_GSYNC_ALLOWED", "1") -- Controls if G-Sync capable monitors should use Variable Refresh Rate (VRR)
 
--- Graphite: Qt apps (Dolphin, etc.) use qt6ct's graphite palette, fonts and icons.
+-- Graphite: Qt apps use qt6ct's graphite palette, fonts and icons.
 -- Not using UWSM, so these live here (and in ~/.config/environment.d/graphite.conf
 -- for apps that Noctalia launches as systemd services).
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")

@@ -11,8 +11,8 @@ local ROW_H = 46
 
 local wins = {}
 local sel = 1
-local hovered = nil
-local hoveredX = nil
+local H = S.hover(function() render() end)
+local HX = S.hover(function() render() end)
 local iconCache = {}
 local loading = false
 
@@ -35,14 +35,12 @@ end
 local function focus(w)
   if not w then return end
   panel.close()
-  S.dispatch(`hl.dsp.focus(\{ window = {S.lstr("address:" .. w.address)} \})`,
-    { "focuswindow", "address:" .. w.address })
+  S.dispatch(`hl.dsp.focus(\{ window = {S.lstr("address:" .. w.address)} \})`)
 end
 
 local function closeWin(w)
   if not w then return end
-  S.dispatch(`hl.dsp.window.close(\{ window = {S.lstr("address:" .. w.address)} \})`,
-    { "closewindow", "address:" .. w.address })
+  S.dispatch(`hl.dsp.window.close(\{ window = {S.lstr("address:" .. w.address)} \})`)
   for i, x in wins do
     if x.address == w.address then table.remove(wins, i); break end
   end
@@ -61,29 +59,23 @@ local function row(i, w)
     key = "w-" .. w.address,
     height = ROW_H,
     selected = isSel,
-    hovered = hovered == i,
+    hovered = H.id == i,
     onClick = function() focus(w) end,
-    onHover = function(st)
-      hovered = if st == "true" then i elseif hovered == i then nil else hovered
-      render()
-    end,
+    onHover = H.fn(i),
   }, {
     lead,
     ui.column({ flexGrow = 1, gap = 1, justify = "center" }, {
-      ui.label({ text = if (w.title or "") ~= "" then w.title else w.class, fontFamily = S.sans, fontSize = 13.5,
+      ui.label({ text = if (w.title or "") ~= "" then w.title else w.class, fontFamily = S.sans, fontSize = S.FS.body,
         color = if isSel then S.C.text else S.C.sub, maxWidth = 440, maxLines = 1 }),
       S.caption(w.class or ""),
     }),
     S.caption(wsLabel(w), if isSel then S.C.sub else S.C.dim),
     ui.row({
       key = "x-" .. w.address, width = 24, height = 24, align = "center", justify = "center",
-      fill = if hoveredX == i then S.C.keyHover else "#00000000",
-      opacity = if isSel or hovered == i or hoveredX == i then 1 else 0,
+      fill = if HX.id == i then S.C.keyHover else S.C.clear,
+      opacity = if isSel or H.id == i or HX.id == i then 1 else 0,
       onClick = function() closeWin(w) end,
-      onHover = function(st)
-        hoveredX = if st == "true" then i elseif hoveredX == i then nil else hoveredX
-        render()
-      end,
+      onHover = HX.fn(i),
     }, { ui.glyph({ name = "x", size = 13, color = S.C.sub }) }),
   })
 end
@@ -99,7 +91,7 @@ function render()
   panel.render(ui.column({ gap = 8, flexGrow = 1, align = "stretch" }, {
     ui.row({ align = "center", gap = 10, height = 30 }, {
       ui.glyph({ name = "app-window", size = 17, color = S.C.sub }),
-      ui.label({ text = "Windows", fontFamily = S.sans, fontSize = 14, color = S.C.text, flexGrow = 1 }),
+      ui.label({ text = "Windows", fontFamily = S.sans, fontSize = S.FS.lg, color = S.C.text, flexGrow = 1 }),
       S.caption(tostring(#wins)),
     }),
     S.hline("h1"),
@@ -134,7 +126,7 @@ end
 local function move(d)
   if #wins == 0 then return end
   sel = S.step(sel, d, #wins)
-  hovered = nil
+  H.id = nil
   render()
 end
 
@@ -146,16 +138,15 @@ function onKey(key, pressed)
   if R.key(key, pressed) then return end
   if pressed == false then return end
   local k = string.lower(tostring(key))
-  if false then
-  elseif k == "return" or k == "kp_enter" or k == "space" then focus(wins[sel])
+  if k == "return" or k == "kp_enter" or k == "space" then focus(wins[sel])
   elseif k == "ctrl+w" then closeWin(wins[sel])
   end
 end
 
 function onOpen(_context)
   R.stop()
-  hovered = nil
-  hoveredX = nil
+  H.id = nil
+  HX.id = nil
   refresh()
   render()
 end

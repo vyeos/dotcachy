@@ -8,22 +8,15 @@ S.fonts()
 
 local caffeine = noctalia.state.get("graphite.caffeine") == true
 local night = noctalia.state.get("graphite.night") == true
-local hovered = nil
-
-local function set(key, on)
-  noctalia.runAsync({ "noctalia", "msg", "plugin", "vyeos/graphite:service", "all", key, if on then "on" else "off" })
-end
+local H = S.hover(function() render() end)
 
 local function icon(id, glyph)
   return S.key({
     key = id,
-    hovered = hovered == id,
+    hovered = H.id == id,
     paddingH = 7,
-    onHover = function(st)
-      hovered = if st == "true" then id elseif hovered == id then nil else hovered
-      render()
-    end,
-    onClick = function() set(id, false) end,
+    onHover = H.fn(id),
+    onClick = function() S.svc(id, "off") end,
   }, { S.glyph(glyph, { color = S.C.text }) })
 end
 

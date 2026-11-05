@@ -7,11 +7,11 @@ local S = require("./style.luau")
 S.fonts()
 
 local info = S.read("graphite.batt") or { present = true, pct = 0, status = "Unknown" }
-local hovered = false
+local H = S.hover(function() render() end)
 
 local BODY_W, BODY_H, INNER_W = 24, 13, 19
 
-local function render()
+function render()
   if info.present == false then
     barWidget.setVisible(false)
     return
@@ -43,18 +43,15 @@ local function render()
   if charging then
     table.insert(kids, S.glyph("bolt", { size = 13, color = S.C.text }))
   end
-  table.insert(kids, S.label(`{pct}%`, { font = S.mono, size = 12, color = if low then S.C.text else S.C.sub }))
+  table.insert(kids, S.label(`{pct}%`, { font = S.mono, size = S.FS.md, color = if low then S.C.text else S.C.sub }))
 
   local state = if charging then "charging" elseif full then "plugged in" else "on battery"
   barWidget.render(ui.row({ gap = 0, align = "center" }, { S.key({
     key = "batt",
-    hovered = hovered,
+    hovered = H.id ~= nil,
     gap = 6,
     tooltip = `Battery {pct}% · {state}`,
-    onHover = function(st)
-      hovered = st == "true"
-      render()
-    end,
+    onHover = H.fn("on"),
     onClick = function() noctalia.togglePanel("vyeos/graphite:power-panel") end,
   }, kids), S.divider("batt-div") }))
 end

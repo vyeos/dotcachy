@@ -1,0 +1,84 @@
+# Snapshot - a screenshot menu built on Noctalia's native screenshot engine
+# (`noctalia msg screenshot-*`), so no grim/slurp/hyprshot is needed.
+#
+# Every capture is saved to the configured folder and copied to the clipboard.
+# After a successful capture Noctalia pipes the image into on-capture.sh, which
+# shows a notification with the preview; clicking it opens the annotator.
+
+id = "vyeos/snapshot"
+name = "Snapshot"
+version = "1.0.0"
+plugin_api = 39
+author = "vyeos"
+license = "MIT"
+dependencies = ["libnotify"]
+tags = ["screenshot", "utility"]
+icon = "camera"
+description = "Screenshot menu: region, window or full screen; copies to clipboard and notifies, click the notification to annotate."
+
+[[setting]]
+key = "directory"
+type = "folder"
+label_key = "settings.directory.label"
+description_key = "settings.directory.description"
+default = "~/Pictures/Screenshots"
+
+[[setting]]
+key = "filename_pattern"
+type = "string"
+label_key = "settings.filename_pattern.label"
+description_key = "settings.filename_pattern.description"
+default = "screenshot_%Y%m%d_%H%M%S"
+
+[[setting]]
+key = "delay"
+type = "int"
+label_key = "settings.delay.label"
+description_key = "settings.delay.description"
+default = 0
+min = 0
+max = 10
+
+[[setting]]
+key = "show_cursor"
+type = "bool"
+label_key = "settings.show_cursor.label"
+default = false
+
+[[setting]]
+key = "freeze_screen"
+type = "bool"
+label_key = "settings.freeze_screen.label"
+description_key = "settings.freeze_screen.description"
+default = true
+
+[[setting]]
+key = "notify"
+type = "bool"
+label_key = "settings.notify.label"
+description_key = "settings.notify.description"
+default = true
+
+# Headless service: receives IPC so keybinds can capture with the plugin's settings:
+#   noctalia msg plugin vyeos/snapshot:service all capture region|window|fullscreen|all
+#   noctalia msg plugin vyeos/snapshot:service all annotate-last
+[[service]]
+id = "service"
+entry = "service.luau"
+
+# The screenshot menu. Toggle with: noctalia msg panel-toggle vyeos/snapshot:menu
+[[panel]]
+id = "menu"
+entry = "menu.luau"
+width = 380
+height = 470
+placement = "floating"
+position = "center"
+
+# Bar button: left click opens the menu, right click captures a region.
+[[widget]]
+id = "button"
+entry = "button.luau"
+
+[widget.actions]
+middle = "none"

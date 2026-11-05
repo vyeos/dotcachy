@@ -1,0 +1,261 @@
+config_version = 16
+
+[accessibility]
+ui_scale = 1.0000000074505806
+
+[bar.default]
+border = "outline_variant"
+border_width = 1
+capsule_border = "outline_variant"
+capsule_border_width = 1
+capsule_group = []
+capsule_radius = 8
+center = [ "vyeos/graphite:clock" ]
+end = [
+    "vyeos/graphite:status",
+    "vyeos/graphite:tasks",
+    "vyeos/graphite:wifi",
+    "vyeos/graphite:bluetooth",
+    "vyeos/graphite:audio",
+    "vyeos/graphite:gpu",
+    "vyeos/graphite:battery",
+    "vyeos/graphite:notifications"
+]
+font_family = "Graphite Sans"
+hover_highlight = false
+margin_edge = 0
+margin_ends = 6
+padding = 10
+radius = 0
+radius_bottom_left = 0
+radius_bottom_right = 0
+radius_top_left = 0
+radius_top_right = 0
+scale = 1.0000000074505806
+start = [ "vyeos/graphite:logo", "vyeos/graphite:workspaces", "vyeos/graphite:window" ]
+thickness = 38
+widget_spacing = 2
+
+[bluetooth]
+connect_when_enabled = true
+connection_notifications = true
+
+[brightness]
+sync_all_monitors = true
+
+[control_center]
+hidden_tabs = [ "weather", "calendar", "notifications", "screen-time" ]
+
+[desktop_widgets]
+schema_version = 2
+widget_order = []
+
+    [desktop_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [desktop_widgets.widget]
+
+[lockscreen]
+blur_intensity = 0.69999999999999996
+tint_intensity = 0.5
+transition = [ "melt" ]
+transition_duration = 400
+
+[lockscreen_widgets]
+enabled = true
+schema_version = 2
+widget_order = [ "lockscreen-widget-time", "lockscreen-widget-date", "lockscreen-widget-user", "lockscreen-login-box@eDP-2", "lockscreen-power" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@eDP-2"]
+    box_height = 128.0
+    box_width = 320.0
+    cx = 720.0
+    cy = 660.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@eDP-2".settings]
+        background_color = "surface"
+        background_opacity = 0.0
+        background_radius = 0.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 0.0
+        layout = "compact"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = false
+        show_password_reveal = false
+        show_session_buttons = false
+        show_unlock_hint = false
+        show_weather = false
+
+    [lockscreen_widgets.widget.lockscreen-power]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 720.0
+    cy = 846.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "vyeos/graphite:lock-power"
+
+        [lockscreen_widgets.widget.lockscreen-power.settings]
+        background = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-date]
+    box_height = 30.0
+    box_width = 300.0
+    cx = 720.0
+    cy = 330.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget.lockscreen-widget-date.settings]
+        background = false
+        center_text = true
+        clock_style = "digital"
+        color = "on_surface_variant"
+        font_family = "Graphite Mono"
+        format = "{:%A  %d %B %Y}"
+        shadow = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-time]
+    box_height = 150.0
+    box_width = 460.0
+    cx = 720.0
+    cy = 240.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget.lockscreen-widget-time.settings]
+        background = false
+        center_text = true
+        clock_style = "digital"
+        color = "on_surface"
+        font_family = "Graphite Mono"
+        format = "{:%H:%M}"
+        shadow = false
+
+    [lockscreen_widgets.widget.lockscreen-widget-user]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 720.0
+    cy = 430.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "label"
+
+        [lockscreen_widgets.widget.lockscreen-widget-user.settings]
+        background = false
+        color = "on_surface"
+        description = "vyeos@cachyos"
+        font_family = "Graphite Sans"
+        shadow = false
+        title = "Rudra Patel"
+
+[notification]
+offset_y = 20
+scale = 0.84999999999999998
+show_app_name = false
+width = 300
+
+[osd]
+offset_y = 20
+
+[plugins]
+enabled = [ "vyeos/graphite" ]
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/official-plugins"
+    name = "official"
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/community-plugins"
+    name = "community"
+
+    [[plugins.source]]
+    kind = "path"
+    location = "/home/vyeos/.config/noctalia/plugins-local"
+    name = "local"
+
+[shell]
+clipboard_enabled = false
+corner_radius_scale = 0
+font_family = "Graphite Sans"
+
+    [shell.animation]
+    speed = 1.0
+
+    [shell.launcher]
+    default_view = "all"
+
+    [shell.panel]
+    transparency_mode = "soft"
+
+    [shell.screenshot]
+    annotate = false
+    copy_on_close = true
+    copy_to_clipboard = false
+    directory = "/home/vyeos/Pictures"
+    pipe_command = "/home/vyeos/.local/bin/graphite-shot"
+    pipe_to_command = true
+    save_to_file = false
+    skip_annotate_on_copy_save = true
+
+[system.monitor]
+enabled = false
+
+[theme]
+builtin = "Noctalia"
+community_palette = "Oxocarbon"
+custom_palette = "Graphite"
+mode = "dark"
+pure_black_dark = false
+source = "custom"
+wallpaper_scheme = "m3-content"
+
+    [theme.templates]
+    builtin_ids = [ "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "qt" ]
+
+[wallpaper]
+directory = "/home/vyeos/Downloads"
+
+    [wallpaper.default]
+    path = "/home/vyeos/Downloads/wallhaven-5ypy88.jpg"
+
+    [wallpaper.last]
+    path = "/home/vyeos/Downloads/wallhaven-5ypy88.jpg"
+
+    [wallpaper.monitors.eDP-2]
+    path = "/home/vyeos/Downloads/wallhaven-5ypy88.jpg"
+
+[widget.clock]
+format = "{:%H:%M %a %d %m}"
+
+[widget.notifications]
+capsule = true
+capsule_fill = "surface_container"
+color = "on_surface_variant"

@@ -1,0 +1,12 @@
+{
+  "settings": {
+    "task_processes": {
+      "label": "Watched apps",
+      "description": "Process names shown in the tasks drawer when running, comma separated (as in `ps -eo comm`)."
+    },
+    "min_workspaces": {
+      "label": "Minimum workspaces",
+      "description": "Workspace keys always shown, even when empty."
+    }
+  }
+}

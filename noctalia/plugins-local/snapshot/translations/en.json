@@ -1,0 +1,25 @@
+{
+  "settings": {
+    "directory": {
+      "label": "Save folder",
+      "description": "Where screenshots are saved. Created if it does not exist."
+    },
+    "filename_pattern": {
+      "label": "File name pattern",
+      "description": "strftime pattern without extension, e.g. screenshot_%Y%m%d_%H%M%S"
+    },
+    "delay": {
+      "label": "Delay (seconds)",
+      "description": "Wait this many seconds before capturing."
+    },
+    "show_cursor": { "label": "Include mouse cursor" },
+    "freeze_screen": {
+      "label": "Freeze screen while selecting",
+      "description": "Freeze the screen during region and window selection."
+    },
+    "notify": {
+      "label": "Show notification",
+      "description": "Show a preview notification after each capture; click it to annotate."
+    }
+  }
+}

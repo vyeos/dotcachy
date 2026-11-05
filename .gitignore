@@ -1,0 +1,21 @@
+# Allowlist: only the rice is tracked. Browsers, app state and anything else
+# under ~/.config stay out of the repo.
+/*
+!/.gitignore
+!/noctalia/
+!/hypr/
+!/hypr-backup-2026-11-04/
+!/kitty/
+!/gtk-3.0/
+!/gtk-4.0/
+!/qt6ct/
+!/environment.d/
+!/uwsm/
+!/swash/
+!/fontconfig/
+!/mimeapps.list
+!/mimeapps.list.bak-dolphin
+!/kdeglobals
+!/kdeglobals.bak
+__pycache__/
+*.pyc

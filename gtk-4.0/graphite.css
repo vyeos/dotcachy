@@ -1,0 +1,18 @@
+/* Graphite: square, flat, engraved - matches the Noctalia bar and Hyprland.
+   Colors come from noctalia.css (imported first); this only changes shape.
+   Remove the @import of this file in gtk.css to undo. */
+* {
+  border-radius: 0;
+}
+window, .background, decoration, decoration-overlay,
+popover > contents, popover > arrow, menu, .menu, tooltip, .csd tooltip,
+button, entry, spinbutton, combobox, dropdown, switch, switch > slider,
+scale > trough, scale > trough > slider, progressbar > trough, progressbar > trough > progress,
+notebook > header > tabs > tab, headerbar, .titlebar, list, row, .card, .boxed-list,
+scrollbar slider, checkbutton > check, check, radio, toast, dialog, messagedialog, .dialog-action-area button {
+  border-radius: 0;
+}
+/* Shadows only where they mean elevation, kept tight and dark. */
+popover > contents, menu, .menu, tooltip {
+  box-shadow: 0 2px 6px rgba(6, 6, 7, 0.6);
+}

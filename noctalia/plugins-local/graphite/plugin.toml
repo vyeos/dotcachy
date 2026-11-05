@@ -1,0 +1,267 @@
+# Graphite Bar - a clean, minimal monochrome top bar of etched keys.
+#
+# One headless service collects Hyprland, network, Bluetooth, battery and
+# long-running-task state and publishes it through noctalia.state. Each bar
+# widget below is a thin client that renders one part of the bar.
+#
+#   left    vyeos/graphite:logo  vyeos/graphite:workspaces  vyeos/graphite:window
+#   center  vyeos/graphite:clock
+#   right   vyeos/graphite:status  vyeos/graphite:tasks  vyeos/graphite:wifi  vyeos/graphite:bluetooth
+#           vyeos/graphite:audio  vyeos/graphite:gpu  vyeos/graphite:battery  vyeos/graphite:notifications
+#
+# Needs: Hyprland (hyprctl), python3 (event socket), NetworkManager (nmcli), bluetoothctl.
+
+id = "vyeos/graphite"
+name = "Graphite Bar"
+version = "1.0.0"
+plugin_api = 39
+author = "vyeos"
+license = "MIT"
+dependencies = []
+tags = ["bar", "theme", "hyprland"]
+icon = "pencil"
+description = "Minimal monochrome graphite top bar of etched keys: workspaces, window title, clock, a hover drawer for long-running apps, Wi-Fi, Bluetooth and battery."
+
+# Process names watched by the tasks drawer, comma separated (as shown by `ps -eo comm`).
+[[setting]]
+key = "task_processes"
+type = "string"
+label_key = "settings.task_processes.label"
+description_key = "settings.task_processes.description"
+default = "steam,obs,discord,spotify,syncthing,qbittorrent,blender"
+
+# Workspaces always shown, even when empty.
+[[setting]]
+key = "min_workspaces"
+type = "int"
+label_key = "settings.min_workspaces.label"
+description_key = "settings.min_workspaces.description"
+default = 5
+min = 1
+max = 10
+
+[[service]]
+id = "service"
+entry = "service.luau"
+
+[[widget]]
+id = "logo"
+entry = "logo.luau"
+
+[[widget]]
+id = "workspaces"
+entry = "workspaces.luau"
+
+[[widget]]
+id = "window"
+entry = "window.luau"
+
+[[widget]]
+id = "clock"
+entry = "clock.luau"
+
+[[widget]]
+id = "status"
+entry = "status.luau"
+
+[[widget]]
+id = "tasks"
+entry = "tasks.luau"
+
+[[widget]]
+id = "wifi"
+entry = "wifi.luau"
+
+[[widget]]
+id = "bluetooth"
+entry = "bluetooth.luau"
+
+[[widget]]
+id = "battery"
+entry = "battery.luau"
+
+[[widget]]
+id = "audio"
+entry = "audio.luau"
+
+[[widget]]
+id = "gpu"
+entry = "gpu.luau"
+
+[[widget]]
+id = "notifications"
+entry = "notifications.luau"
+
+# Panels attached under their bar keys (open where you click).
+[[panel]]
+id = "wifi-panel"
+entry = "wifi-panel.luau"
+width = 360
+height = 470
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "bluetooth-panel"
+entry = "bluetooth-panel.luau"
+width = 360
+height = 440
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "audio-panel"
+entry = "audio-panel.luau"
+width = 400
+height = 336
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "gpu-panel"
+entry = "gpu-panel.luau"
+width = 380
+height = 280
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "power-panel"
+entry = "power-panel.luau"
+width = 460
+height = 262
+placement = "attached"
+position = "top_right"
+open_near_click = true
+
+# Session actions (SUPER + Escape), centered like Noctalia's own session menu.
+[[panel]]
+id = "session-panel"
+entry = "session-panel.luau"
+width = 716
+height = 140
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["1", "2", "3", "4", "5", "Left", "Right", "Tab", "Return", "KP_Enter", "Escape", "h", "l"]
+
+# Graphite control center: a single Home page. Opened by right-clicking the clock
+# or by right-clicking the logo.
+[[panel]]
+id = "cc"
+entry = "cc.luau"
+width = 560
+height = 396
+placement = "attached"
+position = "center"
+open_near_click = false
+
+# Calendar: right click on the clock.
+[[panel]]
+id = "calendar"
+entry = "calendar-panel.luau"
+width = 300
+height = 340
+placement = "attached"
+position = "center"
+open_near_click = false
+
+# Notifications drawer: slides in from the right screen edge under the bar.
+# Positioned, shown and animated by service.luau + drawer.luau.
+[[layer]]
+id = "notifs"
+entry = "drawer.luau"
+layer = "overlay"
+anchors = ["top", "right", "bottom"]
+exclusive_zone = -1
+keyboard = "none"
+output = "focused"
+
+# Emoji picker (SUPER + .): search, category strip, square grid.
+[[panel]]
+id = "emoji"
+entry = "emoji-panel.luau"
+width = 500
+height = 470
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["Up", "Down", "Left", "Right", "Return", "KP_Enter", "Tab", "shift+Tab"]
+
+# Clipboard history (SUPER + V): list + preview. History kept by clip.py,
+# fed from `wl-paste --watch` in service.luau.
+[[panel]]
+id = "clip"
+entry = "clip-panel.luau"
+width = 760
+height = 500
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["Up", "Down", "Page_Up", "Page_Down", "Return", "KP_Enter", "ctrl+p", "shift+Delete"]
+
+# App launcher (SUPER + Space).
+[[panel]]
+id = "launcher"
+entry = "launcher-panel.luau"
+width = 600
+height = 520
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["Up", "Down", "Page_Up", "Page_Down", "Tab", "shift+Tab", "Return", "KP_Enter"]
+
+# Window switcher (SUPER + Tab).
+[[panel]]
+id = "switcher"
+entry = "switcher-panel.luau"
+width = 600
+height = 420
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["Tab", "shift+Tab", "Up", "Down", "Left", "Right", "Return", "KP_Enter", "space", "ctrl+w"]
+
+# Keyboard shortcuts (SUPER + CTRL + /), parsed from binds.lua by binds.py.
+[[panel]]
+id = "shortcuts"
+entry = "shortcuts-panel.luau"
+width = 620
+height = 560
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["Up", "Down", "Page_Up", "Page_Down", "Tab", "shift+Tab"]
+
+# Wallpaper picker (SUPER + SHIFT + W).
+[[panel]]
+id = "wallpaper"
+entry = "wallpaper-panel.luau"
+width = 680
+height = 520
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["Up", "Down", "Left", "Right", "Return", "KP_Enter"]
+
+# Calculator (SUPER + C): basic, advanced and convert modes. No window, so it
+# opens instantly and never touches the sleeping dGPU.
+[[panel]]
+id = "calc"
+entry = "calc-panel.luau"
+width = 480
+height = 446
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["Tab", "shift+Tab", "Up", "Down", "KP_Enter"]
+
+# Lock screen power row (Sleep, Log Out, Reboot, Shut Down), placed through
+# [lockscreen_widgets] in settings.toml.
+[[desktop_widget]]
+id = "lock-power"
+entry = "lock-power.luau"

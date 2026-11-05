@@ -1,0 +1,34 @@
+#!/bin/sh
+# graphite-shot — screenshot hand-off for Noctalia (graphite rice).
+#
+#   <png on stdin> | graphite-shot    Noctalia's screenshot pipe_command: save the
+#                                     image, copy it, and post a notification.
+#                                     Clicking the notification opens swash.
+#   graphite-shot annotate            Open the most recent screenshot in swash
+#                                     (bound to SUPER+SHIFT+A).
+set -u
+dir="$HOME/Pictures/Screenshots"
+last="$dir/.last"
+mkdir -p "$dir"
+
+if [ "${1:-}" = annotate ]; then
+  f=$(cat "$last" 2>/dev/null || true)
+  if [ -n "$f" ] && [ -f "$f" ]; then
+    exec swash "$f"
+  fi
+  notify-send -a Screenshot "No screenshot yet"
+  exit 1
+fi
+
+f="$dir/shot-$(date +%Y-%m-%d_%H-%M-%S).png"
+cat > "$f"
+[ -s "$f" ] || { rm -f "$f"; exit 1; }
+printf '%s\n' "$f" > "$last"
+wl-copy --type image/png < "$f"
+
+# Detach so Noctalia isn't kept waiting on the notification.
+setsid -f sh -c '
+  act=$(notify-send -a Screenshot -i "$1" --action=default=Annotate \
+        "Screenshot copied" "Click to annotate" --wait)
+  [ "$act" = default ] && exec swash "$1"
+' sh "$f" >/dev/null 2>&1 </dev/null

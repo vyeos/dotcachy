@@ -17,3 +17,23 @@ scrollbar slider, checkbutton > check, check, radio, toast, dialog, messagedialo
 popover > contents, menu, .menu, tooltip {
   box-shadow: 0 2px 6px rgba(6, 6, 7, 0.6);
 }
+
+/* Selection: inverted (light block, dark text) so the picked row reads at a glance.
+   adw-gtk3 only washes the row with alpha(accent, .25) and keeps light text,
+   which with the light graphite accent leaves light-on-light. */
+treeview.view:selected, treeview.view:selected:focus, treeview.view:selected:backdrop,
+.view:selected, .view:selected:focus, .view:selected:backdrop,
+iconview:selected, iconview:selected:focus, iconview:selected:backdrop,
+.view text:selected, iconview text:selected,
+flowbox flowboxchild:selected, list > row:selected, row:selected {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+row:selected label, row:selected image, flowbox flowboxchild:selected label {
+  color: @accent_fg_color;
+}
+.view text selection, iconview text selection, textview text selection,
+entry selection, spinbutton selection, label selection {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}

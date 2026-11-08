@@ -16,3 +16,15 @@ scrollbar slider, checkbutton > check, check, radio, toast, dialog, messagedialo
 popover > contents, menu, .menu, tooltip {
   box-shadow: 0 2px 6px rgba(6, 6, 7, 0.6);
 }
+
+/* Selection: inverted (light block, dark text), same as GTK3. */
+.view:selected, gridview > child:selected, listview > row:selected,
+columnview > listview > row:selected, columnview row:selected,
+flowbox > flowboxchild:selected, list > row:selected {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+text selection, label > selection, entry selection {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}

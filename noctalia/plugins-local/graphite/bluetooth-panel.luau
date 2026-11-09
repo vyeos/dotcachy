@@ -1,7 +1,7 @@
 --!nonstrict
 -- Bluetooth panel, attached under the Bluetooth key. Power on/off, paired
--- devices (click to connect or disconnect), and a scan for nearby devices
--- (click to pair, trust and connect).
+-- devices (click to connect or disconnect, forget from the row), and a scan
+-- for nearby devices (click to pair, trust and connect).
 
 local S = require("./style.luau")
 S.fonts()
@@ -14,6 +14,13 @@ local scanning = false
 local busy = nil        -- mac being worked on
 local status = ""
 local H = S.hover(function() render() end)
+local HX = S.hover(function() render() end)  -- the forget box
+local A = S.confirm(function() render() end)
+
+-- Second ticks drive the scan's list polling and expire an armed forget.
+local function syncTicks()
+  panel.setWantsSecondTicks(scanning or A.id ~= nil)
+end
 
 local function glyphFor(name)
   local n = string.lower(name or "")
@@ -81,22 +88,39 @@ local function act(d)
   end)
 end
 
+local function forget(d)
+  busy = d.mac
+  status = ""
+  render()
+  -- remove also disconnects, and takes the pairing and trust with it
+  S.exec({ "bluetoothctl", "remove", d.mac }, 15000, function(ok, msg)
+    busy = nil
+    status = if ok then "Forgot " .. d.name elseif msg ~= "" then msg else "Could not forget " .. d.name
+    S.poke("bt")
+    refresh()
+  end)
+end
+
 local function scan()
   if scanning then return end
   scanning = true
   status = ""
   render()
   -- poll the list while the scan runs so devices appear as they are found
-  panel.setWantsSecondTicks(true)
+  syncTicks()
   S.exec({ "bluetoothctl", "--timeout", "12", "scan", "on" }, 20000, function(_ok, _msg)
     scanning = false
-    panel.setWantsSecondTicks(false)
+    syncTicks()
     refresh()
   end)
 end
 
 local tick = 0
 function update()
+  if A.tick() then
+    syncTicks()
+    render()
+  end
   if not scanning then return end
   tick += 1
   if tick % 2 == 0 then refresh() end
@@ -109,6 +133,27 @@ end
 
 local function devRow(d)
   local state = if busy == d.mac then "working" elseif d.connected then "connected" elseif d.paired then "paired" else "pair"
+  local mine = d.paired or d.connected
+  local armed = A.id == d.mac
+  local kids = {
+    ui.glyph({ name = glyphFor(d.name), size = 16, color = if d.connected then S.C.text else S.C.sub }),
+    ui.label({ text = d.name, fontFamily = S.sans, fontSize = S.FS.body, color = if d.connected then S.C.text else S.C.body, flexGrow = 1, maxWidth = if mine then 170 else 200, maxLines = 1 }),
+  }
+  if not armed then table.insert(kids, S.caption(state, if d.connected then S.C.sub else S.C.dim)) end
+  if mine then
+    table.insert(kids, S.forget({
+      key = "forget-" .. d.mac,
+      armed = armed,
+      shown = H.id == d.mac or HX.id == d.mac,
+      hovered = HX.id == d.mac,
+      onHover = HX.fn(d.mac),
+      onClick = function()
+        if busy ~= nil then return end
+        A.click(d.mac, function() forget(d) end)
+        syncTicks()
+      end,
+    }))
+  end
   return S.item({
     key = "dev-" .. d.mac,
     hovered = H.id == d.mac,
@@ -116,11 +161,7 @@ local function devRow(d)
     tooltip = d.mac,
     onHover = H.fn(d.mac),
     onClick = function() if busy == nil then act(d) end end,
-  }, {
-    ui.glyph({ name = glyphFor(d.name), size = 16, color = if d.connected then S.C.text else S.C.sub }),
-    ui.label({ text = d.name, fontFamily = S.sans, fontSize = S.FS.body, color = if d.connected then S.C.text else S.C.body, flexGrow = 1, maxWidth = 200, maxLines = 1 }),
-    S.caption(state, if d.connected then S.C.sub else S.C.dim),
-  })
+  }, kids)
 end
 
 function render()
@@ -183,6 +224,7 @@ end
 
 function onClose()
   isOpen = false
+  A.id, H.id, HX.id = nil, nil, nil
   panel.setWantsSecondTicks(false)
 end
 

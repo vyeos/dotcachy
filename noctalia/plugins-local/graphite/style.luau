@@ -265,6 +265,45 @@ function S.item(o, children)
   }, children)
 end
 
+-- Two-click confirm for a destructive row action. A.click(id, run) arms id on
+-- the first click and runs on a second click before it expires; A.tick() drops
+-- an expired arm and says so.
+function S.confirm(redraw, ms)
+  local A = { id = nil, at = 0 }
+  function A.click(id, run)
+    if A.id == id then
+      A.id = nil
+      run()
+    else
+      A.id = id
+      A.at = noctalia.nowMs()
+    end
+    redraw()
+  end
+  function A.tick()
+    if A.id and noctalia.nowMs() - A.at >= (ms or 4000) then
+      A.id = nil
+      return true
+    end
+    return false
+  end
+  return A
+end
+
+-- Forget box at the end of a list row: a trash glyph while the row is hovered,
+-- inverted and asking once armed. o: { key, shown, armed, hovered, onClick, onHover }
+function S.forget(o)
+  return ui.row({
+    key = o.key, width = if o.armed then 62 else 24, height = 24, align = "center", justify = "center", radius = 0,
+    fill = if o.armed then S.C.text elseif o.hovered then S.C.keyHover else S.C.clear,
+    onClick = o.onClick,
+    onHover = o.onHover,
+  }, {
+    if o.armed then S.caption("forget?", S.C.inv)
+    else ui.glyph({ name = "trash", size = 13, color = if o.shown then S.C.sub else S.C.clear }),
+  })
+end
+
 -- Run a command and hand back (ok, message) with a trimmed, single-line message.
 function S.exec(argv, timeoutMs, cb)
   noctalia.runAsync(argv, function(r)

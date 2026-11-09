@@ -1,7 +1,8 @@
 --!nonstrict
 -- Wi-Fi panel, attached under the Wi-Fi key. Radio on/off, live download and
--- upload speed, the network list (current first, then saved, then by signal),
--- join with an inline password field, and disconnect.
+-- upload speed, the network list (current first, then saved, then by signal,
+-- saved networks out of range last), join with an inline password field,
+-- disconnect, and forget a saved network.
 
 local S = require("./style.luau")
 S.fonts()
@@ -19,6 +20,8 @@ local pwFor = nil     -- ssid waiting for a password
 local pw = ""
 local status = ""
 local H = S.hover(function() render() end)
+local HX = S.hover(function() render() end)  -- the forget box
+local A = S.confirm(function() render() end)
 local rx, tx = nil, nil           -- bytes/s, nil until two samples exist
 local lastBytes = nil             -- { rx, tx, ms }
 
@@ -105,6 +108,15 @@ local function disconnect()
   end)
 end
 
+local function forget(n)
+  status = ""
+  S.exec({ "nmcli", "connection", "delete", "id", n.ssid }, 15000, function(ok, msg)
+    status = if ok then "Forgot " .. n.ssid elseif msg ~= "" then msg else "Could not forget " .. n.ssid
+    S.poke("net")
+    refresh(false)
+  end)
+end
+
 local function setRadio(on)
   if on == radio then return end -- echo of a programmatic change
   S.svc("wifi", if on then "on" else "off")
@@ -141,7 +153,13 @@ refresh = function(rescan)
     end
     nets = {}
     for _, n in byName do table.insert(nets, n) end
+    for name in known do
+      if not byName[name] then
+        table.insert(nets, { ssid = name, signal = 0, secure = false, inUse = false, known = true, away = true })
+      end
+    end
     table.sort(nets, function(a, b)
+      if (a.away == true) ~= (b.away == true) then return b.away == true end
       if a.inUse ~= b.inUse then return a.inUse end
       if a.known ~= b.known then return a.known end
       return a.signal > b.signal
@@ -154,26 +172,45 @@ refresh = function(rescan)
 end
 
 local function netRow(n)
+  local armed = A.id == n.ssid
   local kids = {
     ui.glyph({ name = sigGlyph(n.signal), size = 16, color = if n.inUse then S.C.text else S.C.sub }),
-    ui.label({ text = n.ssid, fontFamily = S.sans, fontSize = S.FS.body, color = if n.inUse then S.C.text else S.C.body, flexGrow = 1, maxWidth = 190, maxLines = 1 }),
+    -- saved rows give up width to the forget box
+    ui.label({ text = n.ssid, fontFamily = S.sans, fontSize = S.FS.body, color = if n.inUse then S.C.text else S.C.body, flexGrow = 1, maxWidth = if n.known then 130 else 190, maxLines = 1 }),
   }
-  if busy == n.ssid then
-    table.insert(kids, S.caption("joining"))
-  elseif n.inUse then
-    table.insert(kids, S.caption("connected", S.C.sub))
-  elseif n.known then
-    table.insert(kids, S.caption("saved"))
+  if not armed then
+    if busy == n.ssid then
+      table.insert(kids, S.caption("joining"))
+    elseif n.inUse then
+      table.insert(kids, S.caption("connected", S.C.sub))
+    elseif n.away then
+      table.insert(kids, S.caption("out of range"))
+    elseif n.known then
+      table.insert(kids, S.caption("saved"))
+    end
+    if n.secure then table.insert(kids, ui.glyph({ name = "lock", size = 13, color = S.C.dim })) end
+    if not n.away then
+      table.insert(kids, ui.label({ text = `{n.signal}`, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim }))
+    end
   end
-  if n.secure then table.insert(kids, ui.glyph({ name = "lock", size = 13, color = S.C.dim })) end
-  table.insert(kids, ui.label({ text = `{n.signal}`, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim }))
+  if n.known then
+    table.insert(kids, S.forget({
+      key = "forget-" .. n.ssid,
+      armed = armed,
+      shown = H.id == n.ssid or HX.id == n.ssid,
+      hovered = HX.id == n.ssid,
+      onHover = HX.fn(n.ssid),
+      onClick = function() A.click(n.ssid, function() forget(n) end) end,
+    }))
+  end
   return S.item({
     key = "net-" .. n.ssid,
     hovered = H.id == n.ssid,
     selected = n.inUse,
-    tooltip = if n.inUse then "Click to disconnect" else "Click to join",
+    tooltip = if n.away then nil elseif n.inUse then "Click to disconnect" else "Click to join",
     onHover = H.fn(n.ssid),
     onClick = function()
+      if n.away then return end
       if n.inUse then disconnect() else connect(n.ssid, nil) end
     end,
   }, kids)
@@ -181,6 +218,8 @@ end
 
 function render()
   local rows = {}
+  local inRange = 0
+  for _, n in nets do if not n.away then inRange += 1 end end
   if not radio then
     table.insert(rows, S.placeholder("wifi-off", "Wi-Fi is off"))
   elseif #nets == 0 then
@@ -215,7 +254,7 @@ function render()
     ui.row({ align = "center", gap = 8 }, {
       S.caption("Networks"),
       ui.spacer({ flexGrow = 1 }),
-      S.caption(if scanning then "scanning" elseif loaded then `{#nets} found` else ""),
+      S.caption(if scanning then "scanning" elseif loaded then `{inRange} found` else ""),
     }),
     ui.scroll({ flexGrow = 1, gap = 1 }, rows),
   }
@@ -252,12 +291,14 @@ function onOpen(_context)
 end
 
 function update()
+  A.tick()
   sampleSpeed()
   render()
 end
 
 function onClose()
   isOpen = false
+  A.id, H.id, HX.id = nil, nil, nil
   panel.setWantsSecondTicks(false)
 end
 

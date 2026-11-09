@@ -190,6 +190,38 @@ function S.glyph(name, o)
   return ui.glyph({ name = name, size = o.size or 16, color = o.color or S.C.sub })
 end
 
+-- Battery readout, shared by the bar key and the lock screen: a drawn battery
+-- whose fill turns bright with a bright outline below 20%, a bolt while
+-- charging, and the percentage in mono. Returns the row's children.
+function S.batteryParts(info)
+  local BODY_W, BODY_H, INNER_W = 24, 13, 19
+  local pct = math.clamp(info.pct or 0, 0, 100)
+  local charging = info.status == "Charging"
+  local low = pct < 20 and not charging
+  local ink = if low then S.C.text else S.C.sub
+  local fillW = math.max(1, math.floor(INNER_W * pct / 100 + 0.5))
+
+  local kids = {
+    ui.row({ align = "center", gap = 1 }, {
+      ui.row({
+        width = BODY_W,
+        height = BODY_H,
+        radius = 0,
+        border = ink,
+        borderWidth = 1.5,
+        padding = 2.5,
+        align = "center",
+      }, { ui.box({ width = fillW, height = BODY_H - 6, radius = 0, fill = ink }), ui.spacer({ flexGrow = 1 }) }),
+      ui.box({ width = 2, height = 5, radius = 0, fill = ink }),
+    }),
+  }
+  if charging then
+    table.insert(kids, S.glyph("bolt", { size = 13, color = S.C.text }))
+  end
+  table.insert(kids, S.label(`{pct}%`, { font = S.mono, size = S.FS.md, color = ink }))
+  return kids
+end
+
 -- ── Panels ──────────────────────────────────────────────────────────────────
 -- Shared pieces for the Graphite panels: flat, square, engraved.
 

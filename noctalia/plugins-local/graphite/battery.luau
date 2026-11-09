@@ -9,8 +9,6 @@ S.fonts()
 local info = S.read("graphite.batt") or { present = true, pct = 0, status = "Unknown" }
 local H = S.hover(function() render() end)
 
-local BODY_W, BODY_H, INNER_W = 24, 13, 19
-
 function render()
   if info.present == false then
     barWidget.setVisible(false)
@@ -21,29 +19,7 @@ function render()
   local pct = math.clamp(info.pct or 0, 0, 100)
   local charging = info.status == "Charging"
   local full = info.status == "Full" or info.status == "Not charging"
-  local low = pct < 20 and not charging
-  local fillW = math.max(1, math.floor(INNER_W * pct / 100 + 0.5))
-
-  local fill = ui.box({ width = fillW, height = BODY_H - 6, radius = 0, fill = if low then S.C.text else S.C.sub })
-
-  local battery = ui.row({ align = "center", gap = 1 }, {
-    ui.row({
-      width = BODY_W,
-      height = BODY_H,
-      radius = 0,
-      border = if low then S.C.text else S.C.sub,
-      borderWidth = 1.5,
-      padding = 2.5,
-      align = "center",
-    }, { fill, ui.spacer({ flexGrow = 1 }) }),
-    ui.box({ width = 2, height = 5, radius = 0, fill = if low then S.C.text else S.C.sub }),
-  })
-
-  local kids = { battery }
-  if charging then
-    table.insert(kids, S.glyph("bolt", { size = 13, color = S.C.text }))
-  end
-  table.insert(kids, S.label(`{pct}%`, { font = S.mono, size = S.FS.md, color = if low then S.C.text else S.C.sub }))
+  local kids = S.batteryParts(info)
 
   local state = if charging then "charging" elseif full then "plugged in" else "on battery"
   barWidget.render(ui.row({ gap = 0, align = "center" }, { S.key({

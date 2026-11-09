@@ -192,12 +192,6 @@ local function askQuicklink(old)
     end })
 end
 
-local BIND_ERRORS = {
-  ["bad-combo"] = "Use a modifier and one key, like SUPER + G",
-  failed = "Couldn't save that keybind",
-  ["not-editable"] = "This shortcut is part of a group, change it in binds.lua",
-}
-
 local OPS = {}
 
 function OPS.reveal(it) reveal(it) end
@@ -216,24 +210,11 @@ function OPS.alias(it)
 end
 
 function OPS.bind(it)
-  askPrompt({ title = it.name, label = "Modifier + key, like SUPER + G. Leave empty to remove it", value = it.keybind or "", placeholder = "SUPER + G", allowEmpty = true,
-    submit = function(text, done)
-      if text == (it.keybind or "") then done(nil, nil); return end
-      local argv = Src.helper("bind", it.bindId or it.id, it.name, text)
-      for _, a in it.bindRun or it.run do table.insert(argv, a) end
-      callHelper(argv, function(d)
-        if d.status == "ok" or d.status == "removed" then
-          gather()
-          done(nil, if d.status == "ok" then `{d.combo} set for {it.name}` else "Keybind removed")
-        elseif d.status == "taken" then
-          done(`{d.combo} is already used by {d.by}`)
-        elseif d.status == "rejected" then
-          done("Hyprland refused that keybind")
-        else
-          done(BIND_ERRORS[d.status] or "Couldn't save that keybind")
-        end
-      end)
-    end })
+  noctalia.state.set("graphite.bindTarget", noctalia.json.encode({
+    id = it.bindId or it.id, name = it.name, keybind = it.keybind, run = it.bindRun or it.run,
+  }))
+  close()
+  noctalia.togglePanel("vyeos/graphite:bind-record")
 end
 
 function OPS.rename(it)

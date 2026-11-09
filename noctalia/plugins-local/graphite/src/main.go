@@ -12,6 +12,7 @@
 //	graphite binds LUA OUT        parse Hyprland binds
 //	graphite clip DIR VERB [ID]   clipboard history
 //	graphite bind ID LABEL COMBO CMD...   set, change or remove a keybind
+//	graphite bind-record start|stop       suspend Hyprland's binds while recording one
 //	graphite set-default ROLE ID  change the default terminal, browser, files or editor
 //	graphite webapp NAME URL [ICON], webapp-rename, webapp-icon, webapp-delete
 //	graphite task-menu ID CLASS   print a running app's tray menu and .desktop actions as JSON
@@ -66,6 +67,8 @@ func main() {
 		cmdClip(args)
 	case "bind":
 		cmdBind(args)
+	case "bind-record":
+		cmdBindRecord(args[0])
 	case "set-default":
 		cmdSetDefault(args[0], args[1])
 	case "webapp":

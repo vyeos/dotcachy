@@ -343,6 +343,18 @@ position = "center"
 keyboard_focus = "exclusive"
 capture_keys = ["Up", "Down", "Page_Up", "Page_Down", "Tab", "shift+Tab", "Return", "KP_Enter", "ctrl+Return", "ctrl+KP_Enter", "ctrl+k", "ctrl+shift+f", "ctrl+shift+c", "ctrl+Up", "ctrl+Down"]
 
+# Records a keybind for a launcher result (Ctrl+K, Set keybind). Chords come from
+# Hyprland over IPC, since capture_keys can't include SUPER.
+[[panel]]
+id = "bind-record"
+entry = "bind-record-panel.luau"
+width = 460
+height = 216
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["Return", "KP_Enter", "Delete"]
+
 # Window switcher (SUPER + Tab).
 [[panel]]
 id = "switcher"

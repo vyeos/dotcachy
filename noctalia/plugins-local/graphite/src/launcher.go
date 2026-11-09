@@ -11,8 +11,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -534,4 +536,59 @@ func cmdBind(args []string) {
 		return
 	}
 	sayStatus("ok", map[string]any{"combo": combo})
+}
+
+// ── Recording a keybind ─────────────────────────────────────────────────────
+
+// While recording, Hyprland runs no shortcuts at all, so a detached guard leaves the
+// submap by itself in case the panel dies without saying so.
+const recordLimit = 2 * time.Minute
+
+func recordPidPath() string { return dataDir() + "/bind-record.pid" }
+
+func setSubmap(name string) {
+	output(3*time.Second, "hyprctl", "dispatch", fmt.Sprintf("hl.dsp.submap(%q)", name))
+}
+
+func stopRecordGuard() {
+	raw, err := os.ReadFile(recordPidPath())
+	if err != nil {
+		return
+	}
+	os.Remove(recordPidPath())
+	pid, err := strconv.Atoi(strings.TrimSpace(string(raw)))
+	if err != nil {
+		return
+	}
+	// The pid may have been reused since the guard started.
+	cmdline, _ := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
+	if bytes.Contains(cmdline, []byte("bind-record")) {
+		syscall.Kill(pid, syscall.SIGTERM)
+	}
+}
+
+func cmdBindRecord(action string) {
+	switch action {
+	case "start":
+		stopRecordGuard()
+		setSubmap("graphite-record")
+		self, err := os.Executable()
+		if err != nil {
+			return
+		}
+		guard := exec.Command(self, "bind-record", "guard")
+		guard.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+		if guard.Start() == nil {
+			writeAtomic(recordPidPath(), []byte(strconv.Itoa(guard.Process.Pid)))
+			guard.Process.Release()
+		}
+	case "stop":
+		stopRecordGuard()
+		setSubmap("reset")
+	case "guard":
+		time.Sleep(recordLimit)
+		os.Remove(recordPidPath())
+		output(3*time.Second, "noctalia", "msg", "plugin", "vyeos/graphite:bind-record", "all", "expired")
+		setSubmap("reset")
+	}
 }

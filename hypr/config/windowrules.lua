@@ -78,6 +78,30 @@ hl.window_rule({
 	center = true,
 	size = { "monitor_w*0.82", "monitor_h*0.85" },
 })
+-- Thunar rename (F2) and create dialogs: float them over the file manager instead of tiling.
+-- Exact titles so a folder window named "New ..." is not caught.
+hl.window_rule({
+	match = {
+		class = "^([Tt]hunar|org\\.xfce\\.[Tt]hunar)$",
+		title = "^(Rename .*|New Folder|New Empty File|Create New Folder|Create New File)$",
+	},
+	float = true,
+	center = true,
+})
+-- Media viewers float, centered; sizes picked by hand on the 1440x900 panel
+-- (Dragon Player 947x695, qView 788x494), kept as fractions of the monitor.
+hl.window_rule({
+	match = { class = "^(org\\.kde\\.dragonplayer|dragonplayer)$" },
+	float = true,
+	center = true,
+	size = { "monitor_w*0.658", "monitor_h*0.772" },
+})
+hl.window_rule({
+	match = { class = "^(com\\.interversehq\\.qView|qView)$" },
+	float = true,
+	center = true,
+	size = { "monitor_w*0.547", "monitor_h*0.549" },
+})
 hl.window_rule({
 	match = { class = "^(org\\.kde\\.ark)$" },
 	size = { "max(monitor_w, monitor_h)*0.40", "min(monitor_w, monitor_h)*0.40" },

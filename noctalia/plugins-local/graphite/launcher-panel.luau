@@ -5,6 +5,7 @@
 -- Enter or a click launches.
 
 local S = require("./style.luau")
+local W = require("./webapp-form.luau")
 S.fonts()
 
 local ROW_H = 44
@@ -17,6 +18,17 @@ local query = ""
 local sel = 1
 local H = S.hover(function() render() end)
 local opens = 0
+local form = false -- the Create Web App form is showing instead of the list
+
+local CREATE_WEBAPP = {
+  id = "create-webapp",
+  action = "webapp",
+  glyph = "world",
+  name = "Create Web App",
+  lname = "create web app",
+  comment = "Turn a website into an app",
+  hay = "webapp web app pwa site website new add install",
+}
 
 local appsPath = if dataDir then dataDir .. "/apps.json" else nil
 local appsScript = (noctalia.pluginDir() or ".") .. "/apps.py"
@@ -31,6 +43,7 @@ local function loadApps()
       table.insert(apps, a)
     end
   end
+  table.insert(apps, CREATE_WEBAPP)
 end
 
 -- Rescan in the background (apps.py, ~0.2 s); the cached list shows meanwhile.
@@ -75,6 +88,15 @@ end
 
 local function launch(a)
   if not a then return end
+  if a.action == "webapp" then
+    if not form then
+      form = true
+      H.id = nil
+      W.start()
+      render()
+    end
+    return
+  end
   panel.close()
   if a.terminal then
     -- runInTerminal needs $TERMINAL, which this session doesn't set. LC_ALL: LANG here
@@ -88,7 +110,8 @@ end
 local function row(i, a)
   local isSel = sel == i
   local ic = icon(a)
-  local lead = if ic then ui.image({ path = ic, width = 26, height = 26, fit = "contain" })
+  local lead = if a.glyph then ui.row({ width = 26, height = 26, align = "center", justify = "center" }, { S.glyph(a.glyph, { size = 22 }) })
+    elseif ic then ui.image({ path = ic, width = 26, height = 26, fit = "contain" })
     else ui.row({ width = 26, height = 26, fill = S.C.well, align = "center", justify = "center" }, {
       ui.label({ text = string.upper(string.sub(a.name, 1, 1)), fontFamily = S.mono, fontSize = S.FS.md, color = S.C.sub }),
     })
@@ -111,6 +134,10 @@ local function row(i, a)
 end
 
 function render()
+  if form then
+    panel.render(W.view())
+    return
+  end
   local rows = {}
   for i, a in shown do
     table.insert(rows, row(i, a))
@@ -146,6 +173,10 @@ local R = S.repeater(function(k) move(MOVES[k]) end, { "up", "down", "tab", "shi
 function onFrameTick(dt) R.tick(dt) end
 
 function onKey(key, pressed)
+  if form then
+    if pressed ~= false then W.key(string.lower(tostring(key))) end
+    return
+  end
   if R.key(key, pressed) then return end
   if pressed == false then return end
   local k = string.lower(tostring(key))
@@ -159,10 +190,27 @@ function onOpen(_context)
   query = ""
   sel = 1
   H.id = nil
+  form = false
+  W.cancel()
   compute()
   scan() -- picks up newly installed apps
   render()
 end
+
+W.init({
+  redraw = function() render() end,
+  exit = function()
+    form = false
+    opens += 1 -- a new key rebuilds the search line, which gives it focus again
+    compute()
+    render()
+  end,
+  rescan = function() scan() end,
+  launch = function(id)
+    panel.close()
+    noctalia.runAsync({ "gtk-launch", id })
+  end,
+})
 
 loadApps()
 compute()

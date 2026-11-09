@@ -364,7 +364,12 @@ end
 
 -- ── Drawing ─────────────────────────────────────────────────────────────────
 
-local function lead(it)
+local function lead(it, compact)
+  if it.wallpaper then
+    local w, h = if compact then 46 else 112, if compact then 26 else 63
+    if it.preview then return ui.image({ path = it.preview, width = w, height = h, fit = "cover" }) end
+    return ui.row({ width = w, height = h, fill = S.C.well, align = "center", justify = "center" }, { S.glyph("photo", { size = 18, color = S.C.dim }) })
+  end
   if it.icon and it.icon ~= "" then return ui.image({ path = it.icon, width = 26, height = 26, fit = "contain" }) end
   if it.lead then
     return ui.row({ width = 26, height = 26, align = "center", justify = "center" }, { ui.label({ text = it.lead, fontSize = S.FS.emoji - 6 }) })
@@ -400,7 +405,7 @@ local function row(i, it)
   if isSel then table.insert(kids, S.caption("↵")) end
   return S.item({
     key = "a-" .. it.id,
-    height = ROW_H,
+    height = if it.wallpaper then 76 else ROW_H,
     selected = isSel,
     hovered = H.id == i,
     onClick = function() sel = i; activate(it) end,
@@ -455,7 +460,7 @@ local function viewMenu()
     }))
   end
   return frame(
-    ui.row({ align = "center", gap = 10, height = 34 }, { lead(current),
+    ui.row({ align = "center", gap = 10, height = 34 }, { lead(current, true),
       ui.label({ text = current.name, fontFamily = S.sans, fontSize = S.FS.xl, color = S.C.text, maxWidth = 520, maxLines = 1 }) }),
     ui.scroll({ key = "menu", flexGrow = 1, gap = 0, revealKey = "m-" .. menuSel }, rows),
     footer("actions", { "↑↓ move", "↵ run", "ctrl k back" }))
@@ -479,7 +484,7 @@ end
 
 local function viewConfirm()
   return frame(
-    ui.row({ align = "center", gap = 10, height = 34 }, { lead(current),
+    ui.row({ align = "center", gap = 10, height = 34 }, { lead(current, true),
       ui.label({ text = current.name, fontFamily = S.sans, fontSize = S.FS.xl, color = S.C.text, maxWidth = 520, maxLines = 1 }) }),
     ui.column({ flexGrow = 1, align = "center", justify = "center" }, {
       ui.label({ text = confirm.text, fontFamily = S.sans, fontSize = S.FS.lg, color = S.C.text, maxWidth = 520, maxLines = 3 }),

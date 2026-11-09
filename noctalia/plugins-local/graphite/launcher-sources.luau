@@ -388,7 +388,39 @@ end
 
 local IMAGE_EXT = { jpg = true, jpeg = true, png = true, webp = true, jxl = true, bmp = true, gif = true } -- same as the wallpaper panel
 
-local function wallpaperResults(rest)
+-- Thumbnails are shared with the wallpaper panel: same folder, name and size.
+local THUMB_W, THUMB_H, THUMB_JOBS = 392, 220, 2
+local thumbQueue, thumbBusy, thumbRunning = {}, {}, 0
+
+local function pumpThumbs(redraw)
+  while thumbRunning < THUMB_JOBS and #thumbQueue > 0 do
+    local job = table.remove(thumbQueue, 1)
+    thumbRunning += 1
+    noctalia.runAsync({ "magick", job.path .. "[0]", "-thumbnail", `{THUMB_W}x{THUMB_H}^`, "-gravity", "center",
+      "-extent", `{THUMB_W}x{THUMB_H}`, "-quality", "85", job.thumb }, function(_r)
+      thumbRunning -= 1
+      thumbBusy[job.path] = nil
+      pumpThumbs(redraw)
+      redraw()
+    end, 30000)
+  end
+end
+
+-- The thumbnail's path if it's ready; otherwise starts making it and returns nil.
+local function wallpaperThumb(path, redraw)
+  noctalia.mkdirAll(dataDir .. "/thumbs")
+  local thumb = dataDir .. "/thumbs/" .. string.gsub(path, "[^%w%.%-]", "_") .. ".jpg"
+  local have, src = noctalia.fileInfo(thumb), noctalia.fileInfo(path)
+  if have and src and have.mtime >= src.mtime then return thumb end
+  if not thumbBusy[path] then
+    thumbBusy[path] = true
+    table.insert(thumbQueue, { path = path, thumb = thumb })
+    pumpThumbs(redraw)
+  end
+  return nil
+end
+
+local function wallpaperResults(rest, redraw)
   local out = {}
   local folder = noctalia.wallpaperDirectory()
   local list = if folder then noctalia.listDir(folder) else nil
@@ -399,7 +431,8 @@ local function wallpaperResults(rest)
     if ext and IMAGE_EXT[ext] and (rest == "" or string.find(lf, rest, 1, true)) then
       local path = folder .. "/" .. f
       table.insert(out, item("Wallpapers", "wall:" .. path, f, "Wallpaper", {
-        glyph = "photo", run = msg("wallpaper-set", path), location = path, copy = path, transient = true,
+        glyph = "photo", wallpaper = true, preview = wallpaperThumb(path, redraw),
+        run = msg("wallpaper-set", path), location = path, copy = path, transient = true,
       }))
       if #out == PREFIX_MAX then break end
     end
@@ -416,7 +449,7 @@ function Src.prefixed(text, redraw)
   elseif string.sub(lower, 1, 3) == "cb " then
     title, results = "Clipboard", clipboardResults(noctalia.string.trim(string.sub(lower, 4)))
   elseif string.sub(lower, 1, 3) == "wp " then
-    title, results = "Wallpapers", wallpaperResults(noctalia.string.trim(string.sub(lower, 4)))
+    title, results = "Wallpapers", wallpaperResults(noctalia.string.trim(string.sub(lower, 4)), redraw)
   else
     return nil
   end
@@ -439,7 +472,9 @@ function Src.menu(it)
   local function add(label, hint, field, value)
     table.insert(m, { label = label, hint = hint or "", [field] = value })
   end
-  if it.kind == "Connections" then
+  if it.action then
+    add(it.name, "↵", "first", true) -- the Create rows do one thing
+  elseif it.kind == "Connections" then
     add(if it.state == "on" then "Disconnect" else "Connect", "↵", "first", true)
   elseif it.direct then
     add("Run", "↵", "first", true)

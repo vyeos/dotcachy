@@ -154,7 +154,7 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(noctCall .. "screenshot-regio
 hl.bind(mainMod .. " + CONTROL + SHIFT + S", hl.dsp.exec_cmd(noctCall .. "screenshot-fullscreen"))
 
 -- Theming and Wallpaper
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:wallpaper")) -- graphite wallpaper picker
+hl.bind("SUPER + CONTROL + SHIFT + W", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:wallpaper")) -- graphite wallpaper picker
 
 -- Clipboard
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:clip")) -- graphite clipboard history

@@ -43,5 +43,5 @@ render()
 
 -- noctalia msg plugin vyeos/graphite:audio all panel  (keybind: opens under this key)
 function onIpc(event, _payload)
-  if event == "panel" then noctalia.togglePanel("vyeos/graphite:audio-panel") end
+  if event == "panel" then noctalia.togglePanel("vyeos/graphite:audio-panel-kb") end
 end

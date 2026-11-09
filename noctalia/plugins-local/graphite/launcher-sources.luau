@@ -87,6 +87,9 @@ local function powerItems()
   return out
 end
 
+-- Bar-key panels have a keyboard version pinned under the keys (see plugin.toml).
+local KEYBOARD_PANEL = { ["wifi-panel"] = true, ["bluetooth-panel"] = true, ["audio-panel"] = true, ["gpu-panel"] = true, ["power-panel"] = true }
+
 local function panelItems()
   local P = {
     { "cc", "Control Center", "Quick settings, volume and brightness" }, { "calendar", "Calendar", "This month at a glance" },
@@ -100,7 +103,7 @@ local function panelItems()
   local out = {}
   for _, p in P do
     table.insert(out, item("Panels", "panel:" .. p[1], p[2], p[3], {
-      glyph = "layout-grid", run = panelCmd(p[1]), location = dir, fuzzy = true, pinnable = true,
+      glyph = "layout-grid", run = panelCmd(if KEYBOARD_PANEL[p[1]] then p[1] .. "-kb" else p[1]), location = dir, fuzzy = true, pinnable = true,
     }))
   end
   return out

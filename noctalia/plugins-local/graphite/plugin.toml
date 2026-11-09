@@ -290,3 +290,52 @@ capture_keys = ["Tab", "shift+Tab", "Up", "Down", "KP_Enter"]
 [[desktop_widget]]
 id = "lock-power"
 entry = "lock-power.luau"
+
+# The same panels for keyboard shortcuts and the launcher. Noctalia has no way to anchor
+# a panel to a bar key except a real click, and reuses the last click otherwise, so
+# these stay pinned to the right end of the bar, under the keys.
+
+[[panel]]
+id = "wifi-panel-kb"
+entry = "wifi-panel.luau"
+width = 360
+height = 470
+placement = "attached"
+position = "top_right"
+open_near_click = false
+
+[[panel]]
+id = "bluetooth-panel-kb"
+entry = "bluetooth-panel.luau"
+width = 360
+height = 440
+placement = "attached"
+position = "top_right"
+open_near_click = false
+
+[[panel]]
+id = "audio-panel-kb"
+entry = "audio-panel.luau"
+width = 400
+height = 336
+placement = "attached"
+position = "top_right"
+open_near_click = false
+
+[[panel]]
+id = "gpu-panel-kb"
+entry = "gpu-panel.luau"
+width = 380
+height = 280
+placement = "attached"
+position = "top_right"
+open_near_click = false
+
+[[panel]]
+id = "power-panel-kb"
+entry = "power-panel.luau"
+width = 460
+height = 262
+placement = "attached"
+position = "top_right"
+open_near_click = false

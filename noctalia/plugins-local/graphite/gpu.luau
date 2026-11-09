@@ -47,5 +47,5 @@ render()
 
 -- noctalia msg plugin vyeos/graphite:gpu all panel  (opens under this key)
 function onIpc(event, _payload)
-  if event == "panel" then noctalia.togglePanel("vyeos/graphite:gpu-panel") end
+  if event == "panel" then noctalia.togglePanel("vyeos/graphite:gpu-panel-kb") end
 end

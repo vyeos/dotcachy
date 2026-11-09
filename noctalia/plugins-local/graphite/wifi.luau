@@ -50,5 +50,5 @@ render()
 
 -- noctalia msg plugin vyeos/graphite:wifi all panel  (keybind: opens under the key)
 function onIpc(event, _payload)
-  if event == "panel" then noctalia.togglePanel("vyeos/graphite:wifi-panel") end
+  if event == "panel" then noctalia.togglePanel("vyeos/graphite:wifi-panel-kb") end
 end

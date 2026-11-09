@@ -39,5 +39,5 @@ render()
 
 -- noctalia msg plugin vyeos/graphite:bluetooth all panel  (keybind: opens under this key)
 function onIpc(event, _payload)
-  if event == "panel" then noctalia.togglePanel("vyeos/graphite:bluetooth-panel") end
+  if event == "panel" then noctalia.togglePanel("vyeos/graphite:bluetooth-panel-kb") end
 end

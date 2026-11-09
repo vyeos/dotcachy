@@ -95,19 +95,19 @@ hl.bind("XF86Calculator", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphi
 hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(BROWSER))
 hl.bind("CONTROL + SHIFT + Escape", hl.dsp.exec_cmd(TERMINAL .. " --class graphite-btop -e env LC_ALL=en_IN.UTF-8 btop")) -- floats (windowrules.lua)
 hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd(noctCall .. "settings-toggle"))
-hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(widget .. "clock all panel")) -- graphite control center
+hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:cc")) -- graphite control center
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:session-panel"))
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:launcher")) -- graphite launcher
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:emoji")) -- graphite emoji picker
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(noctCall .. "session lock"))
 
 -- Graphite panels (SUPER + CTRL)
-hl.bind(mainMod .. " + CONTROL + P", hl.dsp.exec_cmd(widget .. "battery all panel"))
-hl.bind(mainMod .. " + CONTROL + A", hl.dsp.exec_cmd(widget .. "audio all panel"))
-hl.bind(mainMod .. " + CONTROL + B", hl.dsp.exec_cmd(widget .. "bluetooth all panel"))
-hl.bind(mainMod .. " + CONTROL + W", hl.dsp.exec_cmd(widget .. "wifi all panel"))
+hl.bind(mainMod .. " + CONTROL + P", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:power-panel-kb"))
+hl.bind(mainMod .. " + CONTROL + A", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:audio-panel-kb"))
+hl.bind(mainMod .. " + CONTROL + B", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:bluetooth-panel-kb"))
+hl.bind(mainMod .. " + CONTROL + W", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:wifi-panel-kb"))
 hl.bind(mainMod .. " + CONTROL + comma", hl.dsp.exec_cmd(graphite .. "drawer toggle"))
-hl.bind(mainMod .. " + CONTROL + C", hl.dsp.exec_cmd(widget .. "clock all calendar")) -- graphite calendar
+hl.bind(mainMod .. " + CONTROL + C", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:calendar")) -- graphite calendar
 hl.bind(mainMod .. " + CONTROL + slash", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:shortcuts")) -- graphite shortcuts
 
 -- Quick toggles (SUPER + ALT); they go through the graphite service so the

@@ -65,5 +65,5 @@ render()
 
 -- noctalia msg plugin vyeos/graphite:battery all panel  (keybind: opens under this key)
 function onIpc(event, _payload)
-  if event == "panel" then noctalia.togglePanel("vyeos/graphite:power-panel") end
+  if event == "panel" then noctalia.togglePanel("vyeos/graphite:power-panel-kb") end
 end

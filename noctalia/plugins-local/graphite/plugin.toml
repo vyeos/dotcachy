@@ -15,7 +15,7 @@
 id = "vyeos/graphite"
 name = "Graphite"
 version = "1.0.0"
-plugin_api = 39
+plugin_api = 42
 author = "vyeos"
 license = "MIT"
 dependencies = []
@@ -161,6 +161,109 @@ width = 460
 height = 262
 placement = "attached"
 position = "top_right"
+open_near_click = true
+
+# Right click on a task in the tasks drawer: the app's own tray menu and .desktop actions.
+# Height follows the content. Width has no content mode, so tasks.luau picks the entry
+# nearest the longest label.
+[[panel]]
+id = "task-menu-140"
+entry = "task-menu.luau"
+width = 140
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-160"
+entry = "task-menu.luau"
+width = 160
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-180"
+entry = "task-menu.luau"
+width = 180
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-200"
+entry = "task-menu.luau"
+width = 200
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-220"
+entry = "task-menu.luau"
+width = 220
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-240"
+entry = "task-menu.luau"
+width = 240
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-260"
+entry = "task-menu.luau"
+width = 260
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-280"
+entry = "task-menu.luau"
+width = 280
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-300"
+entry = "task-menu.luau"
+width = 300
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[panel]]
+id = "task-menu-320"
+entry = "task-menu.luau"
+width = 320
+height = "content"
+max_height = 560
+placement = "attached"
+position = "auto"
 open_near_click = true
 
 # Session actions (SUPER + Escape), centered like Noctalia's own session menu.

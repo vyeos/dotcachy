@@ -14,6 +14,9 @@
 //	graphite bind ID LABEL COMBO CMD...   set, change or remove a keybind
 //	graphite set-default ROLE ID  change the default terminal, browser, files or editor
 //	graphite webapp NAME URL [ICON], webapp-rename, webapp-icon, webapp-delete
+//	graphite task-menu ID CLASS   print a running app's tray menu and .desktop actions as JSON
+//	graphite task-menu-click SERVICE MENUPATH ITEM   activate a tray menu item
+//	graphite task-action DESKTOPFILE ACTION          run a .desktop action
 //
 // Only the standard library is used, so build.sh needs nothing but Go.
 package main
@@ -73,6 +76,12 @@ func main() {
 		cmdWebappIcon(args[0], args[1])
 	case "webapp-delete":
 		cmdWebappDelete(args[0])
+	case "task-menu":
+		cmdTaskMenu(args[0], args[1])
+	case "task-menu-click":
+		cmdTaskMenuClick(args[0], args[1], args[2])
+	case "task-action":
+		cmdTaskAction(args[0], args[1])
 	default:
 		fmt.Fprintln(os.Stderr, "unknown command:", os.Args[1])
 		os.Exit(2)

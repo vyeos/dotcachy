@@ -3,7 +3,7 @@
 TERMINAL     = "kitty"
 FILE_MANAGER = "thunar"
 BROWSER      = "brave-origin"
-EDITOR       = "nvim"
+EDITOR       = "kitty -e nvim"
 
 -- Monitors
 MONITOR1 = ""

@@ -1,6 +1,6 @@
 --!nonstrict
 -- Keyboard shortcuts (SUPER + CTRL + /): every Hyprland bind, grouped, with a
--- search line. binds.py reads ~/.config/hypr/config/binds.lua on each open, so
+-- search line. bin/graphite reads ~/.config/hypr/config/binds.lua on each open, so
 -- the list follows the config. Every word typed must appear in the action,
 -- the keys or the group (so "ctrl c" or "screenshot" both work). Up/Down and
 -- Page Up/Down move a selection (held keys repeat); a strip of category keys,
@@ -13,7 +13,7 @@ local ROW_H = 32
 
 local dataDir = noctalia.pluginDataDir()
 local outPath = if dataDir then dataDir .. "/binds.json" else nil
-local script = (noctalia.pluginDir() or ".") .. "/binds.py"
+local helper = (noctalia.pluginDir() or ".") .. "/bin/graphite"
 local bindsLua = (noctalia.getenv("HOME") or "~") .. "/.config/hypr/config/binds.lua"
 
 local binds = {}
@@ -70,7 +70,7 @@ end
 
 local function scan()
   if not outPath then return end
-  noctalia.runAsync({ "python3", script, bindsLua, outPath }, function(r)
+  noctalia.runAsync({ helper, "binds", bindsLua, outPath }, function(r)
     if r.exitCode == 0 and noctalia.string.trim(r.stdout or "") ~= "fresh" then load(); compute(); render() end
   end, 10000)
 end

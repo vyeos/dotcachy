@@ -327,8 +327,8 @@ source = "custom"
     builtin_ids = [ "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "qt" ]
 
 [wallpaper]
-directory = "/home/vyeos/Downloads"
+directory = "/home/vyeos/Pictures/Wallpapers"
 
     [wallpaper.default]
-    path = "/home/vyeos/Downloads/wallhaven-5ypy88.jpg"
+    path = "/home/vyeos/Pictures/Wallpapers/wallhaven-5ypy88.jpg"
 

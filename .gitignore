@@ -16,3 +16,4 @@
 !/kdeglobals
 __pycache__/
 *.pyc
+noctalia/plugins-local/graphite/bin/

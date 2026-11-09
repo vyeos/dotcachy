@@ -2,8 +2,8 @@
 -- Clipboard history (SUPER + V): filter line, then a flat list on the left and
 -- the selected entry's preview in a recessed well on the right.
 -- Up/Down move, Enter copies and closes, Ctrl+P pins, Shift+Delete deletes.
--- History is kept by clip.py (fed by `wl-paste --watch` in the service);
--- this panel only reads clip-index.json and asks clip.py for changes.
+-- History is kept by bin/graphite clip (fed by `wl-paste --watch` in the service);
+-- this panel only reads clip-index.json and asks it for changes.
 
 local S = require("./style.luau")
 S.fonts()
@@ -15,7 +15,7 @@ local PV_H = 354
 
 local dataDir = noctalia.pluginDataDir() or ""
 local indexPath = dataDir .. "/clip-index.json"
-local script = (noctalia.pluginDir() or ".") .. "/clip.py"
+local helper = (noctalia.pluginDir() or ".") .. "/bin/graphite"
 
 local items = {}
 local shown = {}
@@ -74,7 +74,7 @@ local function bytes(n)
 end
 
 local function clip(verb, id, after)
-  local argv = { "python3", script, dataDir, verb }
+  local argv = { helper, "clip", dataDir, verb }
   if id then table.insert(argv, tostring(id)) end
   noctalia.runAsync(argv, function(_r)
     load(); compute()

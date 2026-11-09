@@ -1,14 +1,14 @@
 # Graphite - the whole shell in one monochrome plugin: flat bar keys, panels, launcher,
 # clipboard, notifications, calculator and lock screen row.
 #
-# One headless service publishes state through noctalia.state; events.py feeds it
+# One headless service publishes state through noctalia.state; bin/graphite-events feeds it
 # changes as they happen. Each bar widget and panel is a thin client of that state.
 #
 #   left    logo  workspaces  window
 #   center  clock
 #   right   status  tasks  wifi  bluetooth  audio  gpu  battery  notifications
 #
-# Needs: Hyprland, python3, NetworkManager (nmcli), BlueZ (bluetoothctl), PipeWire (wpctl,
+# Needs: Hyprland, Go (to build src/), NetworkManager (nmcli), BlueZ (bluetoothctl), PipeWire (wpctl,
 # pactl), UPower + power-profiles-daemon (upower, busctl), glib2 (gdbus, gtk-launch), dbus,
 # wl-clipboard, brightnessctl, supergfxctl, ImageMagick (wallpaper thumbnails).
 
@@ -217,8 +217,8 @@ position = "center"
 keyboard_focus = "exclusive"
 capture_keys = ["Up", "Down", "Left", "Right", "Return", "KP_Enter", "Tab", "shift+Tab"]
 
-# Clipboard history (SUPER + V): list + preview. History kept by clip.py,
-# fed from `wl-paste --watch` in events.py.
+# Clipboard history (SUPER + V): list + preview. History kept by bin/graphite clip,
+# fed from `wl-paste --watch` in bin/graphite-events.
 [[panel]]
 id = "clip"
 entry = "clip-panel.luau"
@@ -238,7 +238,7 @@ height = 520
 placement = "floating"
 position = "center"
 keyboard_focus = "exclusive"
-capture_keys = ["Up", "Down", "Page_Up", "Page_Down", "Tab", "shift+Tab", "Return", "KP_Enter"]
+capture_keys = ["Up", "Down", "Page_Up", "Page_Down", "Tab", "shift+Tab", "Return", "KP_Enter", "ctrl+Return", "ctrl+KP_Enter", "ctrl+k", "ctrl+shift+f", "ctrl+shift+c", "ctrl+Up", "ctrl+Down"]
 
 # Window switcher (SUPER + Tab).
 [[panel]]
@@ -251,7 +251,7 @@ position = "center"
 keyboard_focus = "exclusive"
 capture_keys = ["Tab", "shift+Tab", "Up", "Down", "Left", "Right", "Return", "KP_Enter", "space", "ctrl+w"]
 
-# Keyboard shortcuts (SUPER + CTRL + /), parsed from binds.lua by binds.py.
+# Keyboard shortcuts (SUPER + CTRL + /), parsed from binds.lua by bin/graphite.
 [[panel]]
 id = "shortcuts"
 entry = "shortcuts-panel.luau"

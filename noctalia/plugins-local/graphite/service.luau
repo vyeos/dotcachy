@@ -20,7 +20,7 @@
 --   graphite.caffeine, graphite.night             booleans
 --   graphite.clipRev, graphite.audioRev, graphite.drawerTick   change counters
 --
--- Changes arrive through events.py; the timers below only catch what has no event
+-- Changes arrive through bin/graphite-events; the timers below only catch what has no event
 -- (Wi-Fi signal, say) and stop while the session is idle.
 
 local S = require("./style.luau")
@@ -442,7 +442,7 @@ local EVENT = {
 }
 
 local dir = noctalia.pluginDir() or "."
-noctalia.runStream("exec python3 -u '" .. dir .. "/events.py' '" .. (dataDir or "/tmp") .. "'", function(line)
+noctalia.runStream("sh '" .. dir .. "/build.sh' >/dev/null 2>&1; exec '" .. dir .. "/bin/graphite-events' '" .. (dataDir or "/tmp") .. "'", function(line)
   local tag, payload = string.match(line, "^([^\t]*)\t?(.*)$")
   local fn = EVENT[tag]
   if fn then fn(payload) end

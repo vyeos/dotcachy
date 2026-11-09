@@ -1,12 +1,12 @@
 --!nonstrict
 -- "Create Web App" form, shown inside the launcher panel: name, then link, then the
--- icon is fetched; only if that fails does it ask for one. webapp.py does the work.
+-- icon is fetched; only if that fails does it ask for one. bin/graphite does the work.
 
 local S = require("./style.luau")
 
 local W = {}
 
-local helper = (noctalia.pluginDir() or ".") .. "/webapp.py"
+local helper = (noctalia.pluginDir() or ".") .. "/bin/graphite"
 
 local cb = nil        -- { redraw, exit, rescan, launch }
 local step = "name"   -- name | link | busy | icon | done
@@ -32,7 +32,7 @@ local function create(icon)
   run += 1
   local mine = run
   local from = if icon then "icon" else "link"
-  local argv = { "python3", helper, name, link }
+  local argv = { helper, "webapp", name, link }
   if icon then table.insert(argv, icon) end
   busyText = if icon then "Adding icon…" else "Looking for an icon…"
   step, err = "busy", nil

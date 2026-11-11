@@ -195,7 +195,8 @@ function render()
   local body = {
     S.header("bluetooth", "Bluetooth", {
       ui.button({ glyph = "refresh", variant = "ghost", tooltip = "Scan for devices", enabled = powered and not scanning, onClick = scan }),
-      ui.toggle({ checked = powered, onChange = function(v) setPower(v == "true") end }),
+      S.switch({ key = "power", on = powered, hovered = H.id == "power-switch", onHover = H.fn("power-switch"),
+        onClick = function() setPower(not powered) end }),
     }),
     S.hline("h1"),
     S.list("devs", rows),

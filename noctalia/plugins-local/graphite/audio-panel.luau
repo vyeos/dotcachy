@@ -2,15 +2,23 @@
 -- Audio panel, attached under the audio key: output volume and device, input
 -- volume and device. Levels come from the service, so the panel follows volume keys
 -- while open. A slider value equal to the current level is ignored, so opening the
--- panel can never change a level by itself. The body scrolls when devices overflow.
+-- panel can never change a level by itself. The panel's height follows its content
+-- (plugin.toml height = "content"); the device lists are cached in graphite.audioDevs,
+-- so a reopened panel draws at its final size straight away.
 
 local S = require("./style.luau")
 S.fonts()
 
 local vol = S.read("graphite.vol")
+local cached = S.read("graphite.audioDevs")
 local sinks, sources = {}, {}
 local defSink, defSource = "", ""
 local devicesLoaded = false
+if type(cached) == "table" then
+  sinks, sources = cached.sinks or {}, cached.sources or {}
+  defSink, defSource = cached.defSink or "", cached.defSource or ""
+  devicesLoaded = true
+end
 local isOpen = false
 local H = S.hover(function() render() end)
 
@@ -35,6 +43,9 @@ local function readDevices()
     sources = list(parts[2], true)
     defSink, defSource = trim(parts[3]), trim(parts[4])
     devicesLoaded = true
+    noctalia.state.set("graphite.audioDevs", noctalia.json.encode({
+      sinks = sinks, sources = sources, defSink = defSink, defSource = defSource,
+    }))
     render()
   end, 5000)
 end
@@ -42,14 +53,11 @@ end
 local function setVolume(which, pct)
   if not vol then return end
   local field = if which == "out" then "pct" else "inPct"
-  -- the slider stops at 100, so above that its echo is 100
-  if pct == math.clamp(vol[field], 0, 100) then return end
-  local before = S.volumeGlyph(vol.pct, vol.muted)
+  if pct == vol[field] then return end
   vol[field] = pct
   local target = if which == "out" then "@DEFAULT_AUDIO_SINK@" else "@DEFAULT_AUDIO_SOURCE@"
   S.run({ "wpctl", "set-volume", target, string.format("%.2f", pct / 100) })
-  -- Redraw mid-drag only when the icon changes. Safe: the guard above drops the echoed onChange.
-  if S.volumeGlyph(vol.pct, vol.muted) ~= before then render() end
+  render()
 end
 
 local function setDefault(kind, name)
@@ -60,11 +68,18 @@ local function setDefault(kind, name)
   end)
 end
 
-local function sliderRow(key, glyph, muted, value, onChange, onGlyph)
+-- Mute key, level meter, readout. While the pointer is over the meter the
+-- readout shows the level a click would set.
+local function levelRow(key, glyph, muted, value, onSet, onGlyph)
+  local meter, preview = S.meter({ key = key .. "-m", value = value, H = H, onSet = onSet })
+  local text = if preview then `{preview}%` elseif muted then "MUTE" else `{value}%`
   return ui.row({ key = key, gap = 10, align = "center", height = 34 }, {
-    ui.button({ glyph = glyph, variant = "ghost", tooltip = if muted then "Unmute" else "Mute", onClick = onGlyph }),
-    ui.slider({ key = key .. "-s", min = 0, max = 100, step = 1, value = math.clamp(value, 0, 100), flexGrow = 1, onChange = onChange }),
-    ui.label({ text = if muted then "MUTE" else `{value}%`, fontFamily = S.mono, fontSize = S.FS.md, color = if muted then S.C.dim else S.C.text, width = 44, textAlign = "end" }),
+    S.glyphKey({ key = key .. "-g", glyph = glyph, color = if muted then S.C.dim else S.C.sub,
+      hovered = H.id == key .. "-g", onHover = H.fn(key .. "-g"),
+      tooltip = if muted then "Unmute" else "Mute", onClick = onGlyph }),
+    meter,
+    ui.label({ text = text, fontFamily = S.mono, fontSize = S.FS.md,
+      color = if preview then S.C.sub elseif muted then S.C.dim else S.C.text, width = 44, textAlign = "end" }),
   })
 end
 
@@ -93,19 +108,20 @@ function render()
     for _, d in sinks do table.insert(outs, deviceRow("sink", d, d.name == defSink)) end
     local ins = {}
     for _, d in sources do table.insert(ins, deviceRow("source", d, d.name == defSource)) end
-    table.insert(body, ui.scroll({ key = "body", flexGrow = 1, gap = 10, align = "stretch" }, {
+    for _, x in {
       S.caption("Output", S.C.sub),
-      sliderRow("out", S.volumeGlyph(vol.pct, vol.muted), vol.muted, vol.pct,
-        function(v) setVolume("out", math.floor(tonumber(v) or 0)) end, function() S.svc("mute", "out") end),
+      levelRow("out", S.volumeGlyph(vol.pct, vol.muted), vol.muted, vol.pct,
+        function(v) setVolume("out", v) end, function() S.svc("mute", "out") end),
       ui.column({ gap = 1, align = "stretch" }, outs),
       S.hline("h2"),
       S.caption("Input", S.C.sub),
-      sliderRow("in", if vol.inMuted then "microphone-off" else "microphone", vol.inMuted, vol.inPct,
-        function(v) setVolume("in", math.floor(tonumber(v) or 0)) end, function() S.svc("mute", "in") end),
+      levelRow("in", if vol.inMuted then "microphone-off" else "microphone", vol.inMuted, vol.inPct,
+        function(v) setVolume("in", v) end, function() S.svc("mute", "in") end),
       ui.column({ gap = 1, align = "stretch" }, ins),
-    }))
+    } do table.insert(body, x) end
   end
-  panel.render(ui.column({ flexGrow = 1, gap = 10, align = "stretch" }, body))
+  -- no flexGrow: the panel takes this column's height
+  panel.render(ui.column({ gap = 10, align = "stretch" }, body))
 end
 
 S.watch("graphite.vol", function(v)

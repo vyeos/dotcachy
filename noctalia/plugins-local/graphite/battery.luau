@@ -1,7 +1,9 @@
 --!nonstrict
 -- Battery key: a drawn battery whose fill turns bright with a bright outline
--- below 20%, a bolt while charging, and the percentage in mono. Click opens the
--- power panel under the key. Hides itself on machines without a battery.
+-- below 20%, then the percentage in mono, whose last slot is % on battery, a
+-- bolt while charging and a plug when full. The key keeps one width in every
+-- state (S.batteryParts). Click opens the power panel under the key. Hides
+-- itself on machines without a battery.
 
 local S = require("./style.luau")
 S.fonts()

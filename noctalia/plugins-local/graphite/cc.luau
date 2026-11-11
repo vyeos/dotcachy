@@ -1,6 +1,6 @@
 --!nonstrict
 -- Graphite control center: a single Home page, sized to its content. Clock and
--- uptime, six quick toggles, and brightness. Opened from the clock or by
+-- uptime with the battery opposite, six quick toggles, volume and brightness. Opened from the clock or by
 -- right-clicking the logo. Wi-Fi, Bluetooth, audio and power have their own
 -- panels under their bar keys; the tiles here only flip the radios and modes.
 
@@ -13,6 +13,7 @@ local wifi = S.read("graphite.wifi") or {}
 local bt = S.read("graphite.bt") or { devices = {} }
 local notif = S.read("graphite.notif") or {}
 local power = S.read("graphite.power") or {}
+local batt = S.read("graphite.batt") or { present = false }
 local caffeine = noctalia.state.get("graphite.caffeine") == true
 local night = noctalia.state.get("graphite.night") == true
 local bright = { dev = nil, pct = 0 }
@@ -35,37 +36,36 @@ local function readUptime()
   who.uptime = math.floor(tonumber(string.match(u or "", "^([%d%.]+)")) or 0)
 end
 
+-- Straight from sysfs, synchronously, so the brightness row is there on the
+-- panel's first frame instead of popping in after a brightnessctl call.
 local function readBrightness()
-  noctalia.runAsync({ "brightnessctl", "-l", "-m", "-c", "backlight" }, function(r)
-    local pick, pickPct = nil, 0
-    for line in string.gmatch(r.stdout or "", "[^\n]+") do
-      local dev, pct = string.match(line, "^([^,]+),backlight,%d+,(%d+)%%")
-      -- prefer the panel's own backlight over a discrete GPU's
-      if dev and (pick == nil or string.find(pick, "nvidia", 1, true)) then pick, pickPct = dev, tonumber(pct) or 0 end
-    end
-    bright.dev, bright.pct = pick, pickPct
-    render()
-  end, 3000)
+  local base = "/sys/class/backlight"
+  local pick = nil
+  for _, dev in noctalia.listDir(base) or {} do
+    -- prefer the panel's own backlight over a discrete GPU's
+    if pick == nil or string.find(pick, "nvidia", 1, true) then pick = dev end
+  end
+  if not pick then bright.dev = nil; return end
+  local cur = tonumber(string.match(noctalia.readFile(`{base}/{pick}/brightness`) or "", "%d+"))
+  local max = tonumber(string.match(noctalia.readFile(`{base}/{pick}/max_brightness`) or "", "%d+"))
+  if not cur or not max or max <= 0 then bright.dev = nil; return end
+  bright.dev, bright.pct = pick, math.floor(cur * 100 / max + 0.5)
 end
 
 -- ── actions ─────────────────────────────────────────────────────────────────
 
--- Sliders also report programmatic value changes: ignore a value we already hold.
 local function setBrightness(pct)
   if not bright.dev or pct == bright.pct then return end
   bright.pct = pct
   S.run({ "brightnessctl", "-q", "-d", bright.dev, "set", `{math.max(1, pct)}%` })
+  render()
 end
 
--- Same guard for volume: only after the real reading, and never an echoed value
--- (the slider stops at 100, so above that the echo is 100).
 local function setVolume(pct)
-  if not vol or pct == math.clamp(vol.pct, 0, 100) then return end
-  local before = S.volumeGlyph(vol.pct, vol.muted)
+  if not vol or pct == vol.pct then return end
   vol.pct = pct
   S.run({ "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", string.format("%.2f", pct / 100) })
-  -- Redraw mid-drag only when the icon changes. Safe: the guard above drops the echoed onChange.
-  if S.volumeGlyph(vol.pct, vol.muted) ~= before then render() end
+  render()
 end
 
 -- ── pieces ──────────────────────────────────────────────────────────────────
@@ -92,6 +92,70 @@ local function tile(id, glyph, label, sub, on, onClick)
   })
 end
 
+-- Glyph key, level meter, readout. The readout shows the level a click would
+-- set while the pointer is over the meter.
+local function levelRow(key, glyph, value, valueText, dim, onSet, onGlyph)
+  local meter, preview = S.meter({ key = key .. "-m", value = value, H = H, onSet = onSet })
+  return ui.row({ key = key, gap = 10, align = "center", height = 34 }, {
+    S.glyphKey({ key = key .. "-g", glyph = glyph, color = if dim then S.C.dim else S.C.sub,
+      hovered = onGlyph ~= nil and H.id == key .. "-g", onHover = if onGlyph then H.fn(key .. "-g") else nil,
+      onClick = onGlyph }),
+    meter,
+    ui.label({ text = if preview then `{preview}%` else valueText, fontFamily = S.mono, fontSize = S.FS.md,
+      color = if preview then S.C.sub elseif dim then S.C.dim else S.C.text, width = 44, textAlign = "end" }),
+  })
+end
+
+-- "43.0 minutes to full" -> "43 min to full", "2.5 hours left" -> "2.5 h left"
+local function shortTime(t)
+  t = string.gsub(t or "", "(%d+)%.0 ", "%1 ")
+  t = string.gsub(t, " minutes?", " min")
+  t = string.gsub(t, " hours?", " h")
+  t = string.gsub(t, " seconds?", " s")
+  return t
+end
+
+-- Battery, opposite the clock: the drawn battery, the charge in mono with the
+-- bar's state slot after it (% / bolt / plug), and time left and draw below.
+-- Click opens the power panel.
+local function battery()
+  local pct = math.clamp(batt.pct or 0, 0, 100)
+  local state = S.batteryState(batt.status)
+  local low = pct < 20 and state == "battery"
+  local ink = if low then S.C.text else S.C.sub
+  local mark
+  if state == "charging" then
+    mark = S.glyph("bolt", { size = 15, color = S.C.text })
+  elseif state == "full" then
+    mark = S.glyph("plug", { size = 15, color = S.C.sub })
+  else
+    mark = ui.label({ text = "%", fontFamily = S.mono, fontSize = S.FS.xl, color = S.C.text })
+  end
+  local detail = {}
+  if (power.timeLeft or "") ~= "" then table.insert(detail, shortTime(power.timeLeft)) end
+  if (power.rate or "") ~= "" then table.insert(detail, power.rate) end
+  if #detail == 0 then
+    table.insert(detail, if state == "full" then "full" elseif state == "charging" then "charging" else "on battery")
+  end
+  return ui.column({
+    key = "batt",
+    gap = 2,
+    align = "end",
+    onHover = H.fn("batt"),
+    onClick = function() noctalia.togglePanel("vyeos/graphite:power-panel-kb") end,
+  }, {
+    ui.row({ align = "center", gap = 8 }, {
+      S.batteryIcon(pct, ink, "big"),
+      ui.row({ gap = 1, align = "center" }, {
+        ui.label({ text = tostring(pct), fontFamily = S.mono, fontSize = S.FS.xl, color = S.C.text, width = 30, textAlign = "end" }),
+        ui.row({ width = 15, align = "center", justify = "start" }, { mark }),
+      }),
+    }),
+    -- flush with the tiles' edge, so hover brightens the line instead of filling a box
+    ui.label({ text = table.concat(detail, " · "), fontFamily = S.mono, fontSize = S.FS.sm, color = if H.id == "batt" then S.C.sub else S.C.dim }),
+  })
+end
+
 -- ── page ────────────────────────────────────────────────────────────────────
 
 function render()
@@ -100,14 +164,16 @@ function render()
   local btSub = if not bt.powered then "Off" elseif #devices > 0 then devices[1] else "On"
   local wifiSub = if wifi.wired then "Wired" elseif not wifi.radio then "Off" elseif wifi.connected then wifi.ssid else "Not connected"
 
-  local kids = {
-    ui.row({ align = "end", gap = 14 }, {
-      ui.label({ text = noctalia.formatTime("%H:%M", now), fontFamily = S.mono, fontSize = S.FS.big, color = S.C.text }),
-      ui.column({ gap = 2, flexGrow = 1 }, {
-        S.caption(noctalia.formatTime("%A %d %B", now), S.C.sub),
-        ui.label({ text = `{who.user}@{who.host} · up {fmtUptime(who.uptime)}`, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim }),
-      }),
+  local top = {
+    ui.label({ text = noctalia.formatTime("%H:%M", now), fontFamily = S.mono, fontSize = S.FS.big, color = S.C.text }),
+    ui.column({ gap = 2, flexGrow = 1 }, {
+      S.caption(noctalia.formatTime("%A %d %B", now), S.C.sub),
+      ui.label({ text = `{who.user}@{who.host} · up {fmtUptime(who.uptime)}`, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim }),
     }),
+  }
+  if batt.present ~= false then table.insert(top, battery()) end
+  local kids = {
+    ui.row({ align = "end", gap = 14 }, top),
     S.hline("hh1"),
     ui.row({ gap = 6 }, {
       tile("wifi", if wifi.radio then "wifi" else "wifi-off", "Wi-Fi", wifiSub, wifi.radio == true, function()
@@ -133,29 +199,24 @@ function render()
   }
   table.insert(kids, S.hline("hh2"))
   if vol then
-    table.insert(kids, ui.row({ key = "vol", gap = 10, align = "center", height = 34 }, {
-      ui.button({ glyph = S.volumeGlyph(vol.pct, vol.muted), variant = "ghost", onClick = function() S.svc("mute", "out") end }),
-      ui.slider({ key = "vol-s", min = 0, max = 100, step = 1, value = math.clamp(vol.pct, 0, 100), flexGrow = 1,
-        onChange = function(v) setVolume(math.floor(tonumber(v) or 0)) end }),
-      ui.label({ text = if vol.muted then "MUTE" else `{vol.pct}%`, fontFamily = S.mono, fontSize = S.FS.md, color = if vol.muted then S.C.dim else S.C.text, width = 44, textAlign = "end" }),
-    }))
+    table.insert(kids, levelRow("vol", S.volumeGlyph(vol.pct, vol.muted), vol.pct,
+      if vol.muted then "MUTE" else `{vol.pct}%`, vol.muted, setVolume, function() S.svc("mute", "out") end))
   else
     table.insert(kids, ui.spacer({ height = 34 }))
   end
   if bright.dev then
-    table.insert(kids, ui.row({ key = "bri", gap = 10, align = "center", height = 34 }, {
-      ui.button({ glyph = "brightness-half", variant = "ghost" }),
-      ui.slider({ key = "bri-s", min = 0, max = 100, step = 1, value = math.clamp(bright.pct, 0, 100), flexGrow = 1,
-        onChange = function(v) setBrightness(math.floor(tonumber(v) or 0)) end }),
-      ui.label({ text = `{bright.pct}%`, fontFamily = S.mono, fontSize = S.FS.md, color = S.C.text, width = 44, textAlign = "end" }),
-    }))
+    -- the glyph only marks the row; it doesn't click
+    table.insert(kids, levelRow("bri", "brightness-half", bright.pct, `{bright.pct}%`, false, setBrightness, nil))
   end
   panel.render(ui.column({ flexGrow = 1, gap = 12, align = "stretch" }, kids))
 end
 
--- clock and uptime tick while open
+readBrightness()
+
+-- clock, uptime and brightness tick while open
 function update()
   readUptime()
+  readBrightness() -- follows the brightness keys while open
   render()
 end
 
@@ -165,6 +226,8 @@ function onOpen(_context)
   readUptime()
   vol = S.read("graphite.vol")
   power = S.read("graphite.power") or power
+  batt = S.read("graphite.batt") or batt
+  S.poke("power")
   readBrightness()
   panel.setWantsSecondTicks(true)
   render()
@@ -179,6 +242,7 @@ S.watch("graphite.bt", function(v) if type(v) == "table" then bt = v; render() e
 S.watch("graphite.notif", function(v) if type(v) == "table" then notif = v; render() end end)
 S.watch("graphite.vol", function(v) if type(v) == "table" then vol = v; render() end end)
 S.watch("graphite.power", function(v) if type(v) == "table" then power = v; render() end end)
+S.watch("graphite.batt", function(v) if type(v) == "table" then batt = v; render() end end)
 noctalia.state.watch("graphite.caffeine", function(v) caffeine = v == true; render() end)
 noctalia.state.watch("graphite.night", function(v) night = v == true; render() end)
 

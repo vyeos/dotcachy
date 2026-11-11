@@ -65,7 +65,7 @@ end
 function render()
   local items = {}
   if #list == 0 then
-    table.insert(items, S.placeholder("bell-off", "No notifications", { height = 220, size = 28, gap = 10 }))
+    table.insert(items, S.placeholder("bell", "No notifications", { height = 220, size = 28, gap = 10 }))
   else
     for _, n in list do table.insert(items, card(n)) end
   end
@@ -90,13 +90,13 @@ function render()
     ui.row({ align = "center", gap = 10 }, {
       ui.glyph({ name = "bell-z", size = 15, color = S.C.sub }),
       ui.label({ text = "Do not disturb", fontFamily = S.sans, fontSize = S.FS.body, color = S.C.sub, flexGrow = 1 }),
-      ui.toggle({ checked = info.dnd == true, onChange = function(v)
-        local want = v == "true"
-        if want == (info.dnd == true) then return end -- echo of a programmatic change
-        info.dnd = want
-        S.svc("dnd", if want then "on" else "off")
-        render()
-      end }),
+      S.switch({ key = "dnd", on = info.dnd == true, hovered = H.id == "dnd-switch", onHover = H.fn("dnd-switch"),
+        onClick = function()
+          local want = info.dnd ~= true
+          info.dnd = want
+          S.svc("dnd", if want then "on" else "off")
+          render()
+        end }),
     }),
     ui.button({ text = "Clear all", glyph = "trash", variant = "outline", enabled = #list > 0,
       onClick = function()

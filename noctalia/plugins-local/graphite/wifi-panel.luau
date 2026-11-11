@@ -603,7 +603,8 @@ function render()
   local body = {
     S.header("wifi", "Wi-Fi", {
       ui.button({ glyph = "refresh", variant = "ghost", tooltip = "Scan again", enabled = radio and not scanning, onClick = function() refresh(true) end }),
-      ui.toggle({ checked = radio, onChange = function(v) setRadio(v == "true") end }),
+      S.switch({ key = "radio", on = radio, hovered = H.id == "radio-switch", onHover = H.fn("radio-switch"),
+        onClick = function() setRadio(not radio) end }),
     }),
     S.hline("h1"),
   }

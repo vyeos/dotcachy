@@ -196,36 +196,142 @@ function S.glyph(name, o)
   return ui.glyph({ name = name, size = o.size or 16, color = o.color or S.C.sub })
 end
 
--- Battery readout, shared by the bar key and the lock screen: a drawn battery
--- whose fill turns bright with a bright outline below 20%, a bolt while
--- charging, and the percentage in mono. Returns the row's children.
-function S.batteryParts(info)
-  local BODY_W, BODY_H, INNER_W = 24, 13, 19
-  local pct = math.clamp(info.pct or 0, 0, 100)
-  local charging = info.status == "Charging"
-  local low = pct < 20 and not charging
-  local ink = if low then S.C.text else S.C.sub
-  local fillW = math.max(1, math.floor(INNER_W * pct / 100 + 0.5))
+-- A drawn battery: square body with a level fill and a terminal nub.
+-- size "bar" (24x13, the bar and lock screen) or "big" (32x16, the control center).
+local BATTERY_SIZES = {
+  bar = { w = 24, h = 13, inner = 19, nubH = 5, border = 1.5, pad = 2.5 },
+  big = { w = 32, h = 16, inner = 26, nubH = 6, border = 1.5, pad = 3 },
+}
+function S.batteryIcon(pct, ink, size)
+  local d = BATTERY_SIZES[size or "bar"]
+  local fillW = math.max(1, math.floor(d.inner * math.clamp(pct or 0, 0, 100) / 100 + 0.5))
+  return ui.row({ align = "center", gap = 1 }, {
+    ui.row({
+      width = d.w,
+      height = d.h,
+      radius = 0,
+      border = ink,
+      borderWidth = d.border,
+      padding = d.pad,
+      align = "center",
+    }, { ui.box({ width = fillW, height = d.h - 2 * d.pad - 1, radius = 0, fill = ink }), ui.spacer({ flexGrow = 1 }) }),
+    ui.box({ width = 2, height = d.nubH, radius = 0, fill = ink }),
+  })
+end
 
-  local kids = {
-    ui.row({ align = "center", gap = 1 }, {
-      ui.row({
-        width = BODY_W,
-        height = BODY_H,
-        radius = 0,
-        border = ink,
-        borderWidth = 1.5,
-        padding = 2.5,
-        align = "center",
-      }, { ui.box({ width = fillW, height = BODY_H - 6, radius = 0, fill = ink }), ui.spacer({ flexGrow = 1 }) }),
-      ui.box({ width = 2, height = 5, radius = 0, fill = ink }),
+-- Battery readout, shared by the bar key and the lock screen: the drawn
+-- battery (bright with a bright outline below 20%), the number, and one slot
+-- after it that says what the battery is doing: % on battery, a bolt while
+-- charging, a plug when full on the charger. The number sits right-aligned in
+-- room for three digits and the slot never changes size, so plugging in or
+-- crossing 10% / 100% doesn't move anything on the bar. Returns the children.
+S.BATT_NUM_W = 25   -- "100" in Graphite Mono at FS.md (7.75 px a digit)
+S.BATT_SLOT_W = 13
+function S.batteryState(status)
+  if status == "Charging" then return "charging" end
+  if status == "Full" or status == "Not charging" then return "full" end
+  return "battery"
+end
+
+function S.batteryParts(info)
+  local pct = math.clamp(info.pct or 0, 0, 100)
+  local state = S.batteryState(info.status)
+  local low = pct < 20 and state == "battery"
+  local ink = if low then S.C.text else S.C.sub
+  local mark
+  if state == "charging" then
+    mark = S.glyph("bolt", { size = 13, color = S.C.text })
+  elseif state == "full" then
+    mark = S.glyph("plug", { size = 13, color = S.C.sub })
+  else
+    mark = S.label("%", { font = S.mono, size = S.FS.md, color = ink })
+  end
+  return {
+    S.batteryIcon(pct, ink, "bar"),
+    ui.row({ gap = 1, align = "center" }, {
+      ui.label({ text = tostring(pct), fontFamily = S.mono, fontSize = S.FS.md, color = ink, width = S.BATT_NUM_W, textAlign = "end" }),
+      ui.row({ width = S.BATT_SLOT_W, align = "center", justify = "start" }, { mark }),
     }),
   }
-  if charging then
-    table.insert(kids, S.glyph("bolt", { size = 13, color = S.C.text }))
+end
+
+-- Level meter in place of Noctalia's round slider (which can't be squared):
+-- a row of square cells lit up to the level, like the battery fill. Hovering
+-- previews the level under the pointer (cells to gain in grey, cells to lose
+-- dimmed) and a click sets it. Panel nodes get no drag events, so it's
+-- hover + click; each cell is a step of 100 / cells percent.
+-- o: { key, value (0-100), H = S.hover(...), onSet(pct), cells = 20 }
+-- Returns the meter node and the percentage being previewed (nil when none),
+-- so the row's readout can show it.
+S.METER_CELLS = 20
+function S.meter(o)
+  local n = o.cells or S.METER_CELLS
+  local H = o.H
+  local prefix = o.key .. ":"
+  local hoverIdx = nil
+  if type(H.id) == "string" and string.sub(H.id, 1, #prefix) == prefix then
+    hoverIdx = tonumber(string.sub(H.id, #prefix + 1))
   end
-  table.insert(kids, S.label(`{pct}%`, { font = S.mono, size = S.FS.md, color = ink }))
-  return kids
+  local lit = math.floor(math.clamp(o.value or 0, 0, 100) * n / 100 + 0.5)
+  local cells = {}
+  for i = 1, n do
+    local fill
+    if hoverIdx and i > lit and i <= hoverIdx then
+      fill = S.C.sub        -- would be added
+    elseif hoverIdx and i <= lit and i > hoverIdx then
+      fill = S.C.faint      -- would be taken away
+    elseif i <= lit then
+      fill = S.C.text
+    else
+      fill = S.C.well
+    end
+    -- the cell's hit area is the row's full height; only the bar inside is drawn
+    table.insert(cells, ui.column({
+      key = prefix .. i,
+      flexGrow = 1,
+      height = 34,
+      justify = "center",
+      align = "stretch",
+      onHover = H.fn(prefix .. i),
+      onClick = function() o.onSet(math.floor(i * 100 / n + 0.5)) end,
+    }, { ui.box({ height = 10, radius = 0, fill = fill }) }))
+  end
+  local preview = if hoverIdx then math.floor(hoverIdx * 100 / n + 0.5) else nil
+  return ui.row({ key = o.key, flexGrow = 1, gap = 2, align = "center" }, cells), preview
+end
+
+-- Square on/off switch in place of Noctalia's round toggle: a framed track
+-- with a square knob, left and hollow-looking when off, right and inverted
+-- when on. o: { key, on, hovered, onHover, onClick, enabled }
+function S.switch(o)
+  local on = o.on == true
+  local enabled = o.enabled ~= false
+  return ui.row({
+    key = o.key,
+    width = 38,
+    height = 20,
+    padding = 3,
+    radius = 0,
+    border = if on then S.C.text elseif enabled then S.C.sub else S.C.dim,
+    borderWidth = 1,
+    fill = if on then S.C.text elseif o.hovered and enabled then S.C.keyHover else S.C.clear,
+    justify = if on then "end" else "start",
+    align = "center",
+    onHover = o.onHover,
+    onClick = if enabled then o.onClick else nil,
+  }, {
+    ui.box({ width = 12, height = 12, radius = 0, fill = if on then S.C.inv elseif enabled then S.C.sub else S.C.dim }),
+  })
+end
+
+-- Square glyph key for panel rows (mute buttons, the brightness mark), so a
+-- row's leading glyph has the same 34 px footprint whether it clicks or not.
+-- o: { key, glyph, color, hovered, onHover, onClick, tooltip }
+function S.glyphKey(o)
+  return S.key({
+    key = o.key, hovered = o.hovered, paddingH = 0, minWidth = 34, height = 34,
+    onHover = o.onHover, onClick = o.onClick, tooltip = o.tooltip,
+  }, { S.glyph(o.glyph, { color = o.color }) })
 end
 
 -- ── Panels ──────────────────────────────────────────────────────────────────

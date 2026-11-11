@@ -16,6 +16,11 @@
 !/fontconfig/
 !/mimeapps.list
 !/kdeglobals
+!/fish/
+!/lazygit/
 __pycache__/
 *.pyc
 noctalia/plugins-local/graphite/bin/
+# fish: universal variables are machine state, completions are generated
+/fish/fish_variables
+/fish/completions/

@@ -1,0 +1,62 @@
+# lazygit, graphite: the same grey ramp as the bar and kitty, square borders,
+# and the muted terminal accents only where they mean something.
+gui:
+  nerdFontsVersion: "3"
+  border: single # square, like everything else
+  showIcons: true
+  showFileTree: true
+  showRandomTip: false
+  showCommandLog: false
+  showBottomLine: true
+  showPanelJumps: true
+  expandFocusedSidePanel: true
+  mainPanelSplitMode: flexible
+  timeFormat: "02 Jan 2006"
+  shortTimeFormat: "15:04"
+  commitHashLength: 7
+  theme:
+    activeBorderColor:
+      - "#ededeb"
+      - bold
+    inactiveBorderColor:
+      - "#33363a"
+    searchingActiveBorderColor:
+      - "#bcae8f"
+      - bold
+    optionsTextColor:
+      - "#7a7f86"
+    selectedLineBgColor:
+      - "#26282b"
+    inactiveViewSelectedLineBgColor:
+      - "#1c1d20"
+    cherryPickedCommitFgColor:
+      - "#151618"
+    cherryPickedCommitBgColor:
+      - "#a6abb1"
+    markedBaseCommitFgColor:
+      - "#151618"
+    markedBaseCommitBgColor:
+      - "#bcae8f"
+    unstagedChangesColor:
+      - "#b98b88"
+    defaultFgColor:
+      - "#d3d6d9"
+    authorColors:
+      "*": "#a6abb1"
+    branchColorPatterns:
+      "^(main|master)$": "#ededeb"
+      "^(dev|develop)$": "#8e9cad"
+      ".*": "#a6abb1"
+git:
+  autoFetch: true
+  autoRefresh: true
+  parseEmoji: true
+  log:
+    order: topo-order
+    showGraph: always
+os:
+  # open files in nvim inside the same terminal, at the right line
+  editPreset: nvim
+update:
+  method: never # pacman updates it
+disableStartupPopups: true

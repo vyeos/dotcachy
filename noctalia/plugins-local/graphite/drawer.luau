@@ -11,6 +11,7 @@ S.fonts()
 local W = S.DRAWER_W
 local GAP = S.EDGE_GAP
 local SLIDE_MS = 220
+local SLIDE_OUT_MS = 180  -- leaving is a touch quicker than arriving
 
 local list = S.read("graphite.notifs") or {}
 local info = S.read("graphite.notif") or { dnd = false }
@@ -20,8 +21,12 @@ local H = S.hover(function() render() end)
 local t = 0
 local dir = 1
 
+-- p: 0 = hidden past the edge, 1 = fully in. Both directions ease out: they start
+-- fast and settle. In: 1 - (1 - p)^3 as p rises. Out: p^3 as p falls, which is the
+-- same curve run toward the edge (running the "in" curve backwards would start
+-- slowly and then be cut off at full speed).
 local function place(p)
-  local e = 1 - (1 - p) ^ 3 -- ease out cubic
+  local e = if dir == -1 then p ^ 3 else 1 - (1 - p) ^ 3
   local right = math.floor(-(W + 20) + (W + 20 + GAP) * e + 0.5)
   noctalia.layer.configure("notifs", {
     margins = { top = S.barThickness() + GAP, right = right, bottom = GAP },
@@ -111,7 +116,9 @@ end
 
 function onFrameTick(deltaMs)
   if dir == 0 then return end
-  t += (tonumber(deltaMs) or 16) * dir
+  local dt = tonumber(deltaMs) or 16
+  -- time runs on the "in" scale; the way out covers it in SLIDE_OUT_MS
+  t += if dir == -1 then -dt * SLIDE_MS / SLIDE_OUT_MS else dt
   if t >= SLIDE_MS then
     t = SLIDE_MS
     dir = 0
@@ -134,16 +141,23 @@ S.watch("graphite.notif", function(v)
   if type(v) == "table" then info = v end
   render()
 end)
+-- Turn around without a jump: the two directions use different curves, so find
+-- the time on the new curve that puts the drawer where it is now.
+local function turn(newDir)
+  local p = t / SLIDE_MS
+  local shown = if dir == -1 then p ^ 3 else 1 - (1 - p) ^ 3
+  local np = if newDir == -1 then shown ^ (1 / 3) else 1 - (1 - shown) ^ (1 / 3)
+  t = np * SLIDE_MS
+  dir = newDir
+  layer.setNeedsFrameTick(true)
+end
+
 noctalia.state.watch("graphite.drawer", function(v)
   if v == "closed" and dir ~= -1 then
-    dir = -1
-    layer.setNeedsFrameTick(true)
+    turn(-1)
   elseif v == "open" then
     render() -- relative times went stale while it was hidden
-    if dir ~= 1 then
-      dir = 1
-      layer.setNeedsFrameTick(true)
-    end
+    if dir ~= 1 then turn(1) end
   end
 end)
 -- relative times tick over while the drawer is up

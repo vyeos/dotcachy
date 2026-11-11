@@ -74,11 +74,13 @@ local function powerItems()
     { "logout", "Log Out", "Asks first", "logout", true },
     { "reboot", "Reboot", "Asks first", "refresh", true },
     { "shutdown", "Shut Down", "Asks first", "power", true },
+    { "windows", "Reboot to Windows", "Asks first", "brand-windows", true },
   }
   local out = {}
   for _, p in P do
     table.insert(out, item("Power", "power:" .. p[1], p[2], p[3], {
-      glyph = p[4], run = msg("session", p[1]), hay = "session power off suspend restart", fuzzy = true, pinnable = true,
+      glyph = p[4], run = if p[1] == "windows" then S.REBOOT_WINDOWS else msg("session", p[1]),
+      hay = if p[1] == "windows" then "session restart reboot windows dual boot games" else "session power off suspend restart", fuzzy = true, pinnable = true,
       confirm = if p[5] then p[2] else nil,
       -- A keybind can't ask first, so these open the session panel, which does.
       bindRun = if p[5] then panelCmd("session-panel") else nil,

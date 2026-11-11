@@ -1,8 +1,8 @@
 --!nonstrict
--- Session panel (SUPER + Escape): the five session actions as a row of flat
+-- Session panel (SUPER + Escape): the six session actions as a row of flat
 -- square tiles, each with its number key in an inverted corner badge.
--- 1-5 or click picks an action. Lock and Sleep run at once; Log Out, Reboot and
--- Shut Down arm first and run on Enter or a click on the armed tile (however it
+-- 1-6 or click picks an action. Lock and Sleep run at once; Log Out, Reboot,
+-- Windows and Shut Down arm first and run on Enter or a click on the armed tile (however it
 -- was armed). Left/Right move the selection (and disarm), wrapping at the ends and
 -- repeating while held. Enter runs the selected/armed action, Escape closes.
 
@@ -14,6 +14,8 @@ local ACTIONS = {
   { id = "lock-and-suspend", label = "Sleep", glyph = "zzz" },
   { id = "logout", label = "Log Out", glyph = "logout", confirm = true },
   { id = "reboot", label = "Reboot", glyph = "refresh", confirm = true },
+  -- one-shot boot into Windows (see noctalia/bin/windows-bootnext), then a normal reboot
+  { id = "windows", label = "Windows", glyph = "brand-windows", confirm = true },
   { id = "shutdown", label = "Shut Down", glyph = "power", confirm = true },
 }
 
@@ -37,6 +39,10 @@ local function run(i, how)
   end
   armed = nil
   panel.close()
+  if a.id == "windows" then
+    S.run(S.REBOOT_WINDOWS)
+    return
+  end
   S.run({ "noctalia", "msg", "session", a.id })
 end
 
@@ -114,11 +120,19 @@ function onKey(key, pressed)
   end
 end
 
+-- Dim the rest of the screen while the panel is up (a Hyprland layer rule from
+-- windowrules.lua; it's off unless we turn it on).
+local function dim(on)
+  S.run({ "hyprctl", "eval", `if GRAPHITE_PANEL_DIM then GRAPHITE_PANEL_DIM:set_enabled({on}) end` })
+end
+
 function onClose()
   R.stop()
+  dim(false)
 end
 
 function onOpen(_context)
+  dim(true)
   R.stop()
   selected = nil
   H.id = nil

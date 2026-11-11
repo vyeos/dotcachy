@@ -198,7 +198,7 @@ function render()
       ui.toggle({ checked = powered, onChange = function(v) setPower(v == "true") end }),
     }),
     S.hline("h1"),
-    ui.scroll({ flexGrow = 1, gap = 1 }, rows),
+    S.list("devs", rows),
   }
   if status ~= "" then
     table.insert(body, S.status(status))

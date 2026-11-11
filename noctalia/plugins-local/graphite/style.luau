@@ -58,6 +58,12 @@ function S.run(argv)
   noctalia.runAsync(argv)
 end
 
+-- Reboot into Windows once: set the firmware's one-shot BootNext to Windows Boot
+-- Manager, then reboot the normal way. An argv, so the launcher can bind it too.
+-- Needs `sudo sh ~/.config/noctalia/bin/windows-bootnext install` once.
+S.REBOOT_WINDOWS = { "sh", "-c", "if out=$(sudo -n /usr/local/bin/windows-bootnext 2>&1); then noctalia msg session reboot; "
+  .. "else notify-send -a Session \"Can't reboot to Windows\" \"${out:-Run: pkexec sh ~/.config/noctalia/bin/windows-bootnext install}\"; fi" }
+
 -- Hyprland dispatch: takes a dispatcher expression such as hl.dsp.focus({ workspace = 2 }).
 function S.dispatch(luaExpr)
   noctalia.runAsync({ "hyprctl", "dispatch", luaExpr })
@@ -350,6 +356,20 @@ end
 -- Short result line under a panel's list.
 function S.status(text)
   return ui.label({ text = text, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.sub, maxLines = 2 })
+end
+
+-- A scrolling list whose rows don't move when its scrollbar comes and goes.
+-- Noctalia's scroll gives the scrollbar room only once the content overflows, so
+-- stretched rows would jump narrower. Instead the rows get a fixed width, left
+-- aligned, that already leaves the scrollbar's lane free on the right. Sized for
+-- a 360 px panel.
+S.LIST_W = 310
+function S.list(key, rows, o)
+  o = o or {}
+  -- align = "start": a scroll centers narrower content by default
+  return ui.scroll({ key = key, flexGrow = 1, gap = 0, align = "start" }, {
+    ui.column({ key = key .. "-col", width = S.LIST_W, gap = o.gap or 1, align = "stretch" }, rows),
+  })
 end
 
 -- Centered glyph and line, for loading and empty lists.

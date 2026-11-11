@@ -87,7 +87,7 @@ end, { repeating = true })
 ---- LAUNCHER ----
 ------------------
 
-hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(TERMINAL))
+hl.bind("SUPER + Return", hl.dsp.exec_cmd(TERMINAL))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(FILE_MANAGER))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(EDITOR))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:calc")) -- graphite calculator
@@ -107,6 +107,7 @@ hl.bind(mainMod .. " + CONTROL + A", hl.dsp.exec_cmd(noctCall .. "panel-toggle v
 hl.bind(mainMod .. " + CONTROL + B", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:bluetooth-panel-kb"))
 hl.bind(mainMod .. " + CONTROL + W", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:wifi-panel-kb"))
 hl.bind(mainMod .. " + CONTROL + comma", hl.dsp.exec_cmd(graphite .. "drawer toggle"))
+hl.bind(mainMod .. " + CONTROL + SHIFT + comma", hl.dsp.exec_cmd(graphite .. "notifs clear")) -- dismiss all notifications
 hl.bind(mainMod .. " + CONTROL + C", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:calendar")) -- graphite calendar
 hl.bind(mainMod .. " + CONTROL + slash", hl.dsp.exec_cmd(noctCall .. "panel-toggle vyeos/graphite:shortcuts")) -- graphite shortcuts
 

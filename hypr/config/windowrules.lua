@@ -207,5 +207,15 @@ hl.layer_rule({
 	blur_popups = true,
 })
 
+-- Dim the screen behind a floating panel. Off by default; the session panel
+-- turns it on while it is open (hyprctl eval, see session-panel.luau), since
+-- every floating panel shares the noctalia-panel namespace.
+GRAPHITE_PANEL_DIM = hl.layer_rule({
+	name = "graphite-panel-dim",
+	match = { namespace = "^noctalia-panel$" },
+	dim_around = true,
+})
+GRAPHITE_PANEL_DIM:set_enabled(false)
+
 -- Scrolling
 hl.window_rule({ match = { class = "^(firefox|zen|brave-origin)$" }, scroll_touchpad = "0.25" })

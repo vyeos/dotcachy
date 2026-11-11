@@ -552,6 +552,19 @@ function COMMAND.drawer(payload)
   noctalia.state.set("graphite.drawer", if want then "open" else "closed")
 end
 
+-- notifs clear: dismiss everything, like the drawer's Clear all (pop-ups, Noctalia's
+-- history and ours), and slide the drawer away if it is open
+function COMMAND.notifs(payload)
+  if payload ~= "clear" then return end
+  history = {}
+  publishHistory()
+  notif.unread = 0
+  publishNotif()
+  noctalia.runAsync({ "noctalia", "msg", "notification-clear-active" })
+  noctalia.runAsync({ "noctalia", "msg", "notification-clear-history" })
+  noctalia.state.set("graphite.drawer", "closed")
+end
+
 local function pollAll()
   for k in POLL do due[k] = 0 end
 end

@@ -122,7 +122,7 @@ middle = "none"
 id = "wifi-panel"
 entry = "wifi-panel.luau"
 width = 360
-height = 470
+height = 600 # room for ping, speed test and the share code
 placement = "attached"
 position = "auto"
 open_near_click = true
@@ -270,12 +270,12 @@ open_near_click = true
 [[panel]]
 id = "session-panel"
 entry = "session-panel.luau"
-width = 716
+width = 854 # six 132 px tiles, 6 px gaps, 16 px padding
 height = 140
 placement = "floating"
 position = "center"
 keyboard_focus = "exclusive"
-capture_keys = ["1", "2", "3", "4", "5", "Left", "Right", "Tab", "shift+Tab", "Return", "KP_Enter", "Escape", "h", "l"]
+capture_keys = ["1", "2", "3", "4", "5", "6", "Left", "Right", "Tab", "shift+Tab", "Return", "KP_Enter", "Escape", "h", "l"]
 
 # Graphite control center: a single Home page. Opened by right-clicking the clock
 # or the logo.
@@ -419,7 +419,7 @@ entry = "lock-battery.luau"
 id = "wifi-panel-kb"
 entry = "wifi-panel.luau"
 width = 360
-height = 470
+height = 600 # room for ping, speed test and the share code
 placement = "attached"
 position = "top_right"
 open_near_click = false

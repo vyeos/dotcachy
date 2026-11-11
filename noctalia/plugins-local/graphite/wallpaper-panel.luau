@@ -3,7 +3,10 @@
 -- cornered thumbnails from Noctalia's wallpaper folder. The current wallpaper
 -- carries an inverted corner badge; the selection gets a light frame.
 -- Arrows move, Enter or a double click applies (noctalia.setWallpaper).
--- Thumbnails are made once with ImageMagick into pluginDataDir/thumbs.
+-- Thumbnails are made with ImageMagick into pluginDataDir/thumbs, named after the
+-- source's path, modification time and size: an image changed in place gets a new
+-- thumbnail (and a new image path, so nothing cached shows the old one), and the
+-- stale one is deleted.
 
 local S = require("./style.luau")
 S.fonts()
@@ -20,7 +23,7 @@ noctalia.mkdirAll(thumbDir)
 
 local files = {}
 local shown = {}
-local thumbs = {}   -- path -> thumb path (once made)
+local thumbs = {}   -- path -> thumb path (once made, for the source as it is now)
 local pending = {}
 local queue = {}    -- thumbnails still to make; at most MAX_JOBS run at once
 local running = 0
@@ -33,9 +36,24 @@ local lastClick = { i = 0, t = 0 }
 local current = nil
 local dir = nil
 
-local function thumbFor(path)
-  local name = string.gsub(path, "[^%w%.%-]", "_")
-  return thumbDir .. "/" .. name .. ".jpg"
+local function stem(path)
+  return (string.gsub(path, "[^%w%.%-]", "_"))
+end
+
+local function thumbFor(path, src)
+  return `{thumbDir}/{stem(path)}@{math.floor(src.mtime or 0)}-{src.size or 0}.jpg`
+end
+
+-- Delete this source's other thumbnails: older versions, and the unversioned
+-- name thumbnails had before.
+local function dropStale(path, keep)
+  local base = stem(path)
+  for _, name in noctalia.listDir(thumbDir) or {} do
+    local full = thumbDir .. "/" .. name
+    if full ~= keep and (name == base .. ".jpg" or string.sub(name, 1, #base + 1) == base .. "@") then
+      noctalia.removeFile(full)
+    end
+  end
 end
 
 function pump()
@@ -46,7 +64,10 @@ function pump()
       "-extent", `{TW * 2}x{TH * 2}`, "-quality", "85", job.thumb }, function(r)
       running -= 1
       pending[job.path] = nil
-      if r.exitCode == 0 then thumbs[job.path] = job.thumb end
+      if r.exitCode == 0 then
+        thumbs[job.path] = job.thumb
+        dropStale(job.path, job.thumb)
+      end
       pump()
       render()
     end, 30000)
@@ -54,14 +75,32 @@ function pump()
 end
 
 local function ensureThumb(path)
-  if thumbs[path] or pending[path] then return end
-  local t = thumbFor(path)
-  local info = noctalia.fileInfo(t)
   local src = noctalia.fileInfo(path)
-  if info and src and info.mtime >= src.mtime then thumbs[path] = t; return end
-  pending[path] = true
+  if not src then return end
+  local t = thumbFor(path, src)
+  if thumbs[path] == t or pending[path] == t then return end
+  if noctalia.fileInfo(t) then thumbs[path] = t; return end
+  -- the source changed (or is new): drop the old thumbnail until the new one is made
+  thumbs[path] = nil
+  pending[path] = t
   table.insert(queue, { path = path, thumb = t })
   pump()
+end
+
+-- The wallpaper on screen. A panel gets no focused output name, so fall back to
+-- asking each output in turn; the first one with a wallpaper wins.
+local function currentWallpaper()
+  local names = { noctalia.focusedOutputName() }
+  for _, o in noctalia.outputs() or {} do
+    table.insert(names, if type(o) == "table" then (o.name or o.connector) else o)
+  end
+  for _, n in names do
+    if type(n) == "string" and n ~= "" then
+      local p = noctalia.wallpaperPath(n)
+      if p and p ~= "" then return p end
+    end
+  end
+  return nil
 end
 
 local function scan()
@@ -77,7 +116,16 @@ local function scan()
     end
   end
   table.sort(files, function(a, b) return a.lname < b.lname end)
-  current = noctalia.wallpaperPath(noctalia.focusedOutputName() or "") or noctalia.getSetting("wallpaper.default.path")
+  -- thumbnails of images no longer in the folder (renamed, deleted, another folder) go too
+  if dir then
+    local live = {}
+    for _, f in files do live[stem(f.path)] = true end
+    for _, name in noctalia.listDir(thumbDir) or {} do
+      local base = string.match(name, "^(.*)@[^@]*%.jpg$") or string.match(name, "^(.*)%.jpg$")
+      if base and not live[base] then noctalia.removeFile(thumbDir .. "/" .. name) end
+    end
+  end
+  current = currentWallpaper()
 end
 
 local function compute()

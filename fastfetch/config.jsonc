@@ -1,14 +1,15 @@
-// Graphite fastfetch: the vyeos name in large block type (vyeos-big.txt) beside the stats,
-// grey keys, a short list. fish/functions/fastfetch.fish moves the name above the stats in a
-// narrow terminal, and switches to the small name (vyeos.txt) in a very narrow one.
+// Graphite fastfetch: the pixel V (vyeos-v.txt, the bar's logo letter) on the left; on the
+// right a square-cornered frame with icon keys, software above the divider and hardware
+// below, and memory / disk / battery as rows of filled and hollow squares like the panel
+// meters. fish/functions/fastfetch.fish moves the V above the stats in a narrow terminal.
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
   "logo": {
     "type": "file",
-    "source": "~/.config/fastfetch/vyeos-big.txt",
+    "source": "~/.config/fastfetch/vyeos-v.txt",
     "position": "left",
     "color": { "1": "38;2;237;237;235" },
-    "padding": { "top": 2, "left": 0, "right": 4 }
+    "padding": { "top": 4, "left": 1, "right": 4 }
   },
   "display": {
     "separator": "  ",
@@ -18,17 +19,36 @@
       "output": "38;2;211;214;217",
       "separator": "38;2;75;79;84"
     },
-    "key": { "width": 9 }
+    "key": { "width": 0 },
+    "bar": {
+      "char": { "elapsed": "■", "total": "□" },
+      "border": { "left": "", "right": "", "leftElapsed": "", "rightElapsed": "" },
+      "width": 12,
+      "color": { "elapsed": "38;2;237;237;235", "total": "38;2;75;79;84", "border": null }
+    },
+    "percent": {
+      "type": ["bar", "num"],
+      "color": { "green": "38;2;166;171;177", "yellow": "38;2;211;214;217", "red": "38;2;237;237;235" }
+    }
   },
   "modules": [
-    { "type": "custom", "format": "\u001b[38;2;51;54;58m─────────────────────────────\u001b[0m" },
-    { "type": "os", "key": "os" },
-    { "type": "kernel", "key": "kernel" },
-    { "type": "wm", "key": "wm" },
-    { "type": "shell", "key": "shell" },
-    { "type": "terminal", "key": "term" },
-    { "type": "cpu", "key": "cpu", "format": "{name}" },
-    { "type": "memory", "key": "memory" },
-    { "type": "uptime", "key": "uptime" }
+    { "type": "custom", "format": "\u001b[38;2;51;54;58m┌────────────────────────────────────────────\u001b[0m" },
+    { "type": "os", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} " },
+    { "type": "kernel", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} " },
+    { "type": "wm", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} " },
+    { "type": "shell", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} " },
+    { "type": "terminal", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} " },
+    { "type": "terminalfont", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} " },
+    { "type": "command", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} 󰏘", "text": "gsettings get org.gnome.desktop.interface gtk-theme | tr -d \"'\"" },
+    { "type": "packages", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} \udb80\udfd6" },
+    { "type": "custom", "format": "\u001b[38;2;51;54;58m├────────────────────────────────────────────\u001b[0m" },
+    // the boost maximum, not cpuinfo_max_freq, which the power-saver profile caps at 2 GHz
+    { "type": "command", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} ", "text": "n=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -1 | sed 's| w/.*||'); d=/sys/devices/system/cpu/cpu0/cpufreq; k=$(cat $d/amd_pstate_max_freq 2>/dev/null || cat $d/cpuinfo_max_freq); printf '%s @ %d.%02d GHz' \"$n\" $((k / 1000000)) $((k % 1000000 / 10000))" },
+    { "type": "gpu", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} \udb82\udcae", "format": "{name}", "detectionMethod": "pci" },
+    { "type": "memory", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} ", "format": "{percentage-bar}  {used} / {total}" },
+    { "type": "disk", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} \udb80\udeca", "folders": "/", "format": "{size-percentage-bar}  {size-used} / {size-total}" },
+    { "type": "battery", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} \udb80\udc79", "format": "{capacity-bar}  {capacity}" },
+    { "type": "uptime", "key": "{#38;2;51;54;58}│{#38;2;122;127;134} " },
+    { "type": "custom", "format": "\u001b[38;2;51;54;58m└────────────────────────────────────────────\u001b[0m" }
   ]
 }

@@ -2,7 +2,7 @@
 
 A monochrome Hyprland desktop for CachyOS: flat, square and graphite grey, built on [Noctalia](https://github.com/noctalia-dev/noctalia-shell) with one custom plugin that replaces the bar, panels and launcher.
 
-![The desktop with the launcher open](docs/screenshots/desktop.png)
+![The desktop](docs/screenshots/desktop.png)
 
 ![The bar](docs/screenshots/bar.png)
 
@@ -66,9 +66,22 @@ A monochrome Hyprland desktop for CachyOS: flat, square and graphite grey, built
     <td><img src="docs/screenshots/panel-shortcuts.png" alt="Keyboard shortcuts"></td>
     <td><img src="docs/screenshots/panel-power.png" alt="Battery and power profile"><br><br><img src="docs/screenshots/panel-session.png" alt="Session actions"></td>
   </tr>
+  <tr>
+    <td><img src="docs/screenshots/panel-wifi.png" alt="Wi-Fi, with network names blurred"></td>
+    <td><img src="docs/screenshots/panel-drawer.png" alt="Notification drawer"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/panel-bluetooth.png" alt="Bluetooth"></td>
+    <td><img src="docs/screenshots/panel-audio.png" alt="Audio output and input"><br><br><img src="docs/screenshots/panel-gpu.png" alt="Graphics mode"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/panel-emoji.png" alt="Emoji picker"></td>
+    <td><img src="docs/screenshots/panel-switcher.png" alt="Window switcher"></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshots/panel-wallpaper.png" alt="Wallpaper picker"></td>
+  </tr>
 </table>
-
-Also included: Wi-Fi, Bluetooth, audio, GPU mode, emoji picker, window switcher, wallpaper picker and a notification drawer.
 
 ## The rest of the rice
 

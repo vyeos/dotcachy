@@ -1,0 +1,34 @@
+// Graphite fastfetch: the vyeos name in large block type (vyeos-big.txt) beside the stats,
+// grey keys, a short list. fish/functions/fastfetch.fish moves the name above the stats in a
+// narrow terminal, and switches to the small name (vyeos.txt) in a very narrow one.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "file",
+    "source": "~/.config/fastfetch/vyeos-big.txt",
+    "position": "left",
+    "color": { "1": "38;2;237;237;235" },
+    "padding": { "top": 2, "left": 0, "right": 4 }
+  },
+  "display": {
+    "separator": "  ",
+    "color": {
+      "keys": "38;2;122;127;134",
+      "title": "38;2;237;237;235",
+      "output": "38;2;211;214;217",
+      "separator": "38;2;75;79;84"
+    },
+    "key": { "width": 9 }
+  },
+  "modules": [
+    { "type": "custom", "format": "\u001b[38;2;51;54;58m─────────────────────────────\u001b[0m" },
+    { "type": "os", "key": "os" },
+    { "type": "kernel", "key": "kernel" },
+    { "type": "wm", "key": "wm" },
+    { "type": "shell", "key": "shell" },
+    { "type": "terminal", "key": "term" },
+    { "type": "cpu", "key": "cpu", "format": "{name}" },
+    { "type": "memory", "key": "memory" },
+    { "type": "uptime", "key": "uptime" }
+  ]
+}

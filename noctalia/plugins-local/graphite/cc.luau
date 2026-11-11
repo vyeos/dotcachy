@@ -168,7 +168,11 @@ function render()
     ui.label({ text = noctalia.formatTime("%H:%M", now), fontFamily = S.mono, fontSize = S.FS.big, color = S.C.text }),
     ui.column({ gap = 2, flexGrow = 1 }, {
       S.caption(noctalia.formatTime("%A %d %B", now), S.C.sub),
-      ui.label({ text = `{who.user}@{who.host} · up {fmtUptime(who.uptime)}`, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim }),
+      -- the prompt style: your name lit, the rest dim
+      ui.row({ gap = 0, align = "center" }, {
+        ui.label({ text = who.user, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.text }),
+        ui.label({ text = `@{who.host} · up {fmtUptime(who.uptime)}`, fontFamily = S.mono, fontSize = S.FS.sm, color = S.C.dim }),
+      }),
     }),
   }
   if batt.present ~= false then table.insert(top, battery()) end

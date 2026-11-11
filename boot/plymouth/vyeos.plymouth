@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=vyeos
+Description=The pixel V on black, with five squares filling in as the system starts.
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/vyeos
+ScriptFile=/usr/share/plymouth/themes/vyeos/vyeos.script

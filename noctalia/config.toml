@@ -168,11 +168,11 @@ widget_order = [ "lockscreen-widget-time", "lockscreen-widget-date", "lockscreen
 
         [lockscreen_widgets.widget.lockscreen-widget-user.settings]
         background = false
-        color = "on_surface"
-        description = "vyeos@cachyos"
-        font_family = "Graphite Sans"
+        color = "on_surface_variant"
+        description = ""
+        font_family = "Graphite Mono"
         shadow = false
-        title = "Rudra Patel"
+        title = "V Y E O S"
 
     [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
     box_height = 128.0
@@ -283,11 +283,11 @@ widget_order = [ "lockscreen-widget-time", "lockscreen-widget-date", "lockscreen
 
         [lockscreen_widgets.widget.lockscreen-widget-user-mux.settings]
         background = false
-        color = "on_surface"
-        description = "vyeos@cachyos"
-        font_family = "Graphite Sans"
+        color = "on_surface_variant"
+        description = ""
+        font_family = "Graphite Mono"
         shadow = false
-        title = "Rudra Patel"
+        title = "V Y E O S"
 
 
 [notification]

@@ -18,6 +18,9 @@
 !/kdeglobals
 !/fish/
 !/lazygit/
+!/fastfetch/
+!/nvim/
+!/boot/
 __pycache__/
 *.pyc
 noctalia/plugins-local/graphite/bin/

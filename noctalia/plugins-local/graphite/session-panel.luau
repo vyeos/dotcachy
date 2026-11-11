@@ -15,7 +15,7 @@ local ACTIONS = {
   { id = "logout", label = "Log Out", glyph = "logout", confirm = true },
   { id = "reboot", label = "Reboot", glyph = "refresh", confirm = true },
   -- one-shot boot into Windows (see noctalia/bin/windows-bootnext), then a normal reboot
-  { id = "windows", label = "Windows", glyph = "brand-windows", confirm = true },
+  { id = "windows", label = "Windows", glyph = "windows-squares", confirm = true },
   { id = "shutdown", label = "Shut Down", glyph = "power", confirm = true },
 }
 
@@ -70,7 +70,7 @@ local function tile(i, a)
   }, {
     ui.row({ align = "center" }, { ui.spacer({ flexGrow = 1 }), badge }),
     ui.column({ flexGrow = 1, gap = 8, align = "center", justify = "center" }, {
-      ui.glyph({ name = a.glyph, size = 22, color = ink }),
+      S.glyph(a.glyph, { size = 22, color = ink }),
       ui.label({ text = if not isArmed then a.label elseif armedBy == "mouse" then "Click again" else "Press Enter",
         fontFamily = S.sans, fontSize = S.FS.body, color = ink }),
     }),

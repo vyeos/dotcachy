@@ -191,8 +191,22 @@ function S.volumeGlyph(pct, muted)
   return "volume"
 end
 
+-- The Windows mark: four flat squares, drawn from boxes so it stays square like
+-- the rest of the rice (the icon font's brand-windows is a tilted, outlined pane).
+local function windowsMark(size, color)
+  local gap = math.max(1, math.floor(size * 0.1 + 0.5))
+  local cell = math.floor((size - gap) / 2)
+  local function sq() return ui.box({ width = cell, height = cell, radius = 0, fill = color }) end
+  return ui.column({ gap = gap, width = 2 * cell + gap, height = 2 * cell + gap }, {
+    ui.row({ gap = gap }, { sq(), sq() }),
+    ui.row({ gap = gap }, { sq(), sq() }),
+  })
+end
+
+-- A glyph from the icon font, or one of the marks drawn here ("windows-squares").
 function S.glyph(name, o)
   o = o or {}
+  if name == "windows-squares" then return windowsMark(o.size or 16, o.color or S.C.sub) end
   return ui.glyph({ name = name, size = o.size or 16, color = o.color or S.C.sub })
 end
 

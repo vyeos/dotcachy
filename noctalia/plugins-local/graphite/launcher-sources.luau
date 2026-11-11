@@ -74,7 +74,7 @@ local function powerItems()
     { "logout", "Log Out", "Asks first", "logout", true },
     { "reboot", "Reboot", "Asks first", "refresh", true },
     { "shutdown", "Shut Down", "Asks first", "power", true },
-    { "windows", "Reboot to Windows", "Asks first", "brand-windows", true },
+    { "windows", "Reboot to Windows", "Asks first", "windows-squares", true },
   }
   local out = {}
   for _, p in P do

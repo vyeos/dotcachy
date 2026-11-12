@@ -355,9 +355,6 @@ settings_show_advanced = true
     [shell.animation]
     speed = 1.0
 
-    [shell.greeter_sync]
-    auto_sync = false       # see greeter/install.sh
-
     [shell.panel]
     transparency_mode = "soft"
 

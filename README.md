@@ -116,7 +116,7 @@ You'll need Hyprland 0.57+ (Lua config), Noctalia 5.4+, Go, `fd`, `wl-clipboard`
 git clone https://github.com/vyeos/dotcachy ~/.config   # into an empty ~/.config
 ln -s ../../../.config/noctalia/fonts ~/.local/share/fonts/Graphite
 ln -s ../../.config/noctalia/bin/graphite-shot ~/.local/bin/graphite-shot
-sudo sh ~/.config/noctalia/greeter/install.sh           # optional: the login screen
+sudo sh ~/.config/noctalia/greeter/install-quickshell.sh enable   # optional: the login screen (Quickshell + cage under greetd)
 ```
 
 The plugin in `noctalia/plugins-local/graphite` compiles its Go helpers the first time it starts.

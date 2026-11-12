@@ -14,7 +14,7 @@
 //	graphite bind ID LABEL COMBO CMD...   set, change or remove a keybind
 //	graphite bind-record start|stop       suspend Hyprland's binds while recording one
 //	graphite set-default ROLE ID  change the default terminal, browser, files or editor
-//	graphite webapp NAME URL [ICON], webapp-rename, webapp-icon, webapp-delete
+//	graphite webapp NAME URL [ICON], webapp-rename, webapp-icon, webapp-delete, images
 //	graphite task-menu ID CLASS   print a running app's tray menu and .desktop actions as JSON
 //	graphite task-menu-click SERVICE MENUPATH ITEM   activate a tray menu item
 //	graphite task-action DESKTOPFILE ACTION          run a .desktop action
@@ -77,6 +77,8 @@ func main() {
 		cmdWebappRename(args[0], args[1])
 	case "webapp-icon":
 		cmdWebappIcon(args[0], args[1])
+	case "images":
+		cmdImages()
 	case "webapp-delete":
 		cmdWebappDelete(args[0])
 	case "task-menu":

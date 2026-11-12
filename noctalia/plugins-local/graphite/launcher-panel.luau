@@ -6,6 +6,7 @@
 
 local S = require("./style.luau")
 local W = require("./webapp-form.luau")
+local Pick = require("./icon-pick.luau")
 local Rank = require("./launcher-rank.luau")
 local Src = require("./launcher-sources.luau")
 S.fonts()
@@ -21,7 +22,7 @@ local shown, heads = {}, {} -- heads: shown index -> section title drawn above t
 local query, sel, opens = "", 1, 0
 local histPos = nil         -- position in past searches while recalling them with Up
 local note = nil            -- short message in the footer
-local mode = "list"         -- list | menu | prompt | confirm | form
+local mode = "list"         -- list | menu | prompt | confirm | form | icon
 local current = nil         -- the result a menu, prompt or confirm is about
 local menu, menuSel = {}, 1
 local prompt = nil          -- { title, label, value, placeholder, submit(text, done) }
@@ -113,6 +114,7 @@ end
 
 local function backToList(message)
   mode, current, prompt, confirm, note = "list", nil, nil, nil, message
+  Pick.cancel()
   opens += 1 -- a new key rebuilds the search line, which gives it focus again
   compute()
   render()
@@ -227,12 +229,17 @@ function OPS.rename(it)
 end
 
 function OPS.icon(it)
-  askPrompt({ title = it.name, label = "Path to an image, or an image link", value = "", placeholder = "~/Pictures/icon.png",
-    submit = function(text, done)
-      callHelper(Src.helper("webapp-icon", it.id, text), function(d)
-        if d.status == "ok" then scan(); done(nil, "Icon changed") else done(d.message or "Couldn't use that image") end
+  mode, note = "icon", nil
+  Pick.start({
+    helper = Src.helper("images"),
+    pick = function(path, done)
+      callHelper(Src.helper("webapp-icon", it.id, path), function(d)
+        if mode ~= "icon" then return end
+        if d.status == "ok" then scan(); backToList("Icon changed") else done(d.message or "Couldn't use that image") end
       end)
-    end })
+    end,
+  })
+  render()
 end
 
 local function setDefault(role, appId)
@@ -340,6 +347,7 @@ local function submit()
   elseif mode == "menu" then runEntry(menu[menuSel])
   elseif mode == "prompt" then submitPrompt()
   elseif mode == "confirm" then confirm.action()
+  elseif mode == "icon" then Pick.enter()
   end
 end
 
@@ -463,6 +471,21 @@ local function viewPrompt()
     footer("", { "↵ save", "ctrl k back" }))
 end
 
+local function viewIcon()
+  return frame(
+    ui.column({ gap = 8, align = "stretch" }, {
+      ui.row({ align = "center", gap = 10, height = 34 }, { lead(current, true),
+        ui.label({ text = "Icon for " .. current.name, fontFamily = S.sans, fontSize = S.FS.xl, color = S.C.text, maxWidth = 520, maxLines = 1 }) }),
+      Pick.field(submit),
+    }),
+    Pick.body(),
+    ui.row({ align = "center", gap = 14, height = 20 }, (function()
+      local kids = { S.caption(Pick.note() or "images"), ui.spacer({ flexGrow = 1 }) }
+      for _, h in Pick.hints() do table.insert(kids, S.caption(h)) end
+      return kids
+    end)()))
+end
+
 local function viewConfirm()
   return frame(
     ui.row({ align = "center", gap = 10, height = 34 }, { lead(current, true),
@@ -478,6 +501,7 @@ function render()
   elseif mode == "menu" then panel.render(viewMenu())
   elseif mode == "prompt" then panel.render(viewPrompt())
   elseif mode == "confirm" then panel.render(viewConfirm())
+  elseif mode == "icon" then panel.render(viewIcon())
   else panel.render(viewList()) end
   follow = false
 end
@@ -515,6 +539,8 @@ local function move(d)
     render()
   elseif mode == "list" then
     moveList(d)
+  elseif mode == "icon" then
+    Pick.move(d)
   end
 end
 
@@ -574,7 +600,10 @@ function onKey(key, pressed)
     end
     return
   end
-  if (mode == "list" or mode == "menu") and R.key(key, pressed) then
+  if mode == "icon" and pressed ~= false then
+    if k == "tab" then Pick.complete(); return end
+  end
+  if (mode == "list" or mode == "menu" or mode == "icon") and R.key(key, pressed) then
     if pendingCompute then panel.setNeedsFrameTick(true) end
     return
   end
@@ -598,6 +627,7 @@ function onOpen(_context)
   H.id = nil
   mode, current, prompt, confirm = "list", nil, nil, nil
   W.cancel()
+  Pick.cancel()
   live.windows = nil -- window addresses go stale; never offer yesterday's
   pendingCompute = false
   readApps()
@@ -607,6 +637,8 @@ function onOpen(_context)
   gather()
   render()
 end
+
+Pick.init({ redraw = function() render() end })
 
 W.init({
   redraw = function() render() end,

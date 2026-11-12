@@ -11,4 +11,5 @@ export PATH="$HOME/.local/bin:$PATH"
 set --export BUN_INSTALL "$HOME/.bun"
 set --export PATH $BUN_INSTALL/bin $PATH
 
-status is-interactive; and zoxide init fish --cmd cd. | source
+status is-interactive; and zoxide init fish | source
+status is-interactive; and zoxide init fish --cmd cd | source

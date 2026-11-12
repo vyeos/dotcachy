@@ -412,6 +412,11 @@ entry = "lock-power.luau"
 id = "lock-battery"
 entry = "lock-battery.luau"
 
+# Lock screen mark: the pixel V above the clock, placed the same way.
+[[desktop_widget]]
+id = "lock-mark"
+entry = "lock-mark.luau"
+
 # The same panels for keyboard shortcuts and the launcher. Noctalia has no way to anchor
 # a panel to a bar key except a real click, and reuses the last click otherwise, so
 # these stay pinned to the right end of the bar, under the keys.

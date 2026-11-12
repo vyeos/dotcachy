@@ -11,7 +11,7 @@ install -m 644 "$U"/.local/share/fonts/Graphite/*.ttf /usr/local/share/fonts/Gra
 fc-cache -f /usr/local/share/fonts/Graphite
 
 # 2. Wallpaper (same image as the desktop)
-install -o greeter -g greeter -m 644 "$U/Downloads/wallhaven-5ypy88.jpg" "$STATE/wallpaper.jpg"
+install -o greeter -g greeter -m 644 "$U/Pictures/Wallpapers/wallhaven-5ypy88.jpg" "$STATE/wallpaper.jpg"
 
 # 3. Config (back up any existing one first)
 [ -f "$STATE/greeter.toml" ] && cp -a "$STATE/greeter.toml" "$STATE/greeter.toml.bak-$(date +%Y%m%d%H%M%S)"

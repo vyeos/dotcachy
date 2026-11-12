@@ -1,7 +1,8 @@
 --!nonstrict
 -- Lock screen power row: flat keys in the session panel's language. Sleep runs
--- at once; Log Out, Reboot and Shut Down arm on the first click (the key inverts
--- and asks) and run on a second click within ARM_SECS.
+-- at once; Log Out, Reboot, Windows (reboot into Windows once) and Shut Down arm
+-- on the first click (the key inverts and asks) and run on a second click within
+-- ARM_SECS.
 -- State stays in this script: changing a lock widget's settings while locked
 -- segfaults Noctalia 5.4.1 (LockscreenWidgetsHost::syncSurfaces).
 
@@ -12,6 +13,7 @@ local ACTIONS = {
   { id = "suspend", label = "Sleep", glyph = "zzz" },
   { id = "logout", label = "Log Out", glyph = "logout", confirm = true },
   { id = "reboot", label = "Reboot", glyph = "refresh", confirm = true },
+  { id = "windows", label = "Windows", glyph = "windows-squares", confirm = true, run = S.REBOOT_WINDOWS },
   { id = "shutdown", label = "Shut Down", glyph = "power", confirm = true },
 }
 
@@ -35,7 +37,7 @@ local function press(i)
     setArmed(i)
   else
     setArmed(nil)
-    S.run({ "noctalia", "msg", "session", a.id })
+    S.run(a.run or { "noctalia", "msg", "session", a.id })
   end
   render()
 end
@@ -55,7 +57,7 @@ local function key(i, a)
     onClick = function() press(i) end,
     onHover = H.fn(i),
   }, {
-    ui.glyph({ name = a.glyph, size = 15, color = ink }),
+    S.glyph(a.glyph, { size = 15, color = ink }),
     ui.label({ text = if isArmed then a.label .. "?" else a.label, fontFamily = S.sans, fontSize = S.FS.body, color = ink }),
   })
 end

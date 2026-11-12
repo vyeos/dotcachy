@@ -52,7 +52,7 @@ transition_duration = 400
 [lockscreen_widgets]
 enabled = true
 schema_version = 2
-widget_order = [ "lockscreen-widget-time", "lockscreen-widget-date", "lockscreen-widget-user", "lockscreen-login-box@eDP-2", "lockscreen-power", "lockscreen-battery", "lockscreen-widget-time-mux", "lockscreen-widget-date-mux", "lockscreen-widget-user-mux", "lockscreen-login-box@eDP-1", "lockscreen-power-mux", "lockscreen-battery-mux" ]
+widget_order = [ "lockscreen-widget-time", "lockscreen-widget-date", "lockscreen-widget-user", "lockscreen-login-box@eDP-2", "lockscreen-power", "lockscreen-battery", "lockscreen-mark", "lockscreen-widget-time-mux", "lockscreen-widget-date-mux", "lockscreen-widget-user-mux", "lockscreen-login-box@eDP-1", "lockscreen-power-mux", "lockscreen-battery-mux", "lockscreen-mark-mux" ]
 
     [lockscreen_widgets.grid]
     cell_size = 16
@@ -113,6 +113,20 @@ widget_order = [ "lockscreen-widget-time", "lockscreen-widget-date", "lockscreen
     type = "vyeos/graphite:lock-battery"
 
         [lockscreen_widgets.widget.lockscreen-battery.settings]
+        background = false
+
+    [lockscreen_widgets.widget.lockscreen-mark]
+    box_height = 0.0
+    box_width = 0.0
+    cy = 112.0
+    cx = 720.0
+    output = "eDP-2"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "vyeos/graphite:lock-mark"
+
+        [lockscreen_widgets.widget.lockscreen-mark.settings]
         background = false
 
     [lockscreen_widgets.widget.lockscreen-widget-date]
@@ -228,6 +242,20 @@ widget_order = [ "lockscreen-widget-time", "lockscreen-widget-date", "lockscreen
     type = "vyeos/graphite:lock-battery"
 
         [lockscreen_widgets.widget.lockscreen-battery-mux.settings]
+        background = false
+
+    [lockscreen_widgets.widget.lockscreen-mark-mux]
+    box_height = 0.0
+    box_width = 0.0
+    cy = 112.0
+    cx = 720.0
+    output = "eDP-1"
+    placement_height = 900.0
+    placement_width = 1440.0
+    rotation = 0.0
+    type = "vyeos/graphite:lock-mark"
+
+        [lockscreen_widgets.widget.lockscreen-mark-mux.settings]
         background = false
 
     [lockscreen_widgets.widget.lockscreen-widget-date-mux]

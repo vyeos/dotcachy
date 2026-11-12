@@ -1,0 +1,30 @@
+#!/bin/sh
+# Start Noctalia for this Hyprland session and make sure it actually comes up.
+#
+# On 2026-11-12 the shell froze about a second into its first start after boot (main
+# thread spinning, nothing drawn, so the session sat on Hyprland's grey background);
+# the same build started fine the second time. Until the cause is known, this checks
+# the shell answers on its IPC socket and restarts it if it doesn't. A healthy shell
+# answers in a few milliseconds; a frozen one never does.
+#
+# Run from hypr/config/autostart.lua in place of plain "noctalia".
+
+tries=0
+while [ $tries -lt 3 ]; do
+  noctalia &
+  pid=$!
+  ok=0
+  # give it up to ~12 s to answer
+  for wait in 3 3 3 3; do
+    sleep $wait
+    kill -0 $pid 2>/dev/null || break                # it exited on its own
+    if timeout 2 noctalia msg wallpaper-get >/dev/null 2>&1; then ok=1; break; fi
+  done
+  [ $ok = 1 ] && exit 0
+  tries=$((tries + 1))
+  logger -t noctalia-start "noctalia (pid $pid) did not answer after start, restarting (attempt $tries)"
+  kill -9 $pid 2>/dev/null
+  sleep 1
+done
+logger -t noctalia-start "noctalia failed to start 3 times, giving up"
+notify-send -u critical "Noctalia" "The shell failed to start. Run noctalia from a terminal to see why." 2>/dev/null

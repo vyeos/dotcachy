@@ -3,6 +3,7 @@
 
 hl.on("hyprland.start", function ()
     hl.exec_cmd("dbus-update-activation-environment --systemd --all")
-    hl.exec_cmd("noctalia")
+    -- noctalia-start restarts the shell if it freezes on start (see the script)
+    hl.exec_cmd("/home/vyeos/.config/noctalia/bin/noctalia-start")
     hl.exec_cmd("xhost +SI:localuser:root")
 end)

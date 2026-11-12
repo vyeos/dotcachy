@@ -1,6 +1,6 @@
-// vyeos boot splash: the pixel V (same as the bar logo) centred on black, and
+// vyeos boot splash: the pixel V (5 x 5 grid, same as the bar logo and fastfetch) centred on black, and
 // five squares under it that fill in left to right as boot progresses, like
-// the bar's workspace squares.
+// the bar's workspace squares. Shutdown and reboot show only the V.
 
 Window.SetBackgroundTopColor(0, 0, 0);
 Window.SetBackgroundBottomColor(0, 0, 0);
@@ -8,30 +8,39 @@ Window.SetBackgroundBottomColor(0, 0, 0);
 cx = Window.GetX() + Window.GetWidth() / 2;
 cy = Window.GetY() + Window.GetHeight() / 2;
 
+booting = (Plymouth.GetMode() == "boot");
+
+// with the squares the V sits a little above centre, without them it is centred
 logo.image = Image("v.png");
 logo.sprite = Sprite(logo.image);
 logo.sprite.SetX(cx - logo.image.GetWidth() / 2);
-logo.sprite.SetY(cy - logo.image.GetHeight() / 2 - 40);
+lift = 0;
+if (booting) lift = 40;
+logo.sprite.SetY(cy - logo.image.GetHeight() / 2 - lift);
 
 on = Image("on.png");
 off = Image("off.png");
 PITCH = 30;
 left = cx - (4 * PITCH + on.GetWidth()) / 2;
 top = cy + logo.image.GetHeight() / 2 + 40;
-for (i = 0; i < 5; i++) {
-  dot[i] = Sprite(off);
-  dot[i].SetX(left + i * PITCH);
-  dot[i].SetY(top);
+if (booting) {
+  for (i = 0; i < 5; i++) {
+    dot[i] = Sprite(off);
+    dot[i].SetX(left + i * PITCH);
+    dot[i].SetY(top);
+  }
 }
 
 shown = 0;
 fun progress_callback(duration, progress) {
-  n = Math.Int(progress * 6);
-  if (n > 5) n = 5;
-  // never step back: the estimate can wobble
-  if (n > shown) {
-    for (i = 0; i < n; i++) dot[i].SetImage(on);
-    shown = n;
+  if (booting) {
+    n = Math.Int(progress * 6);
+    if (n > 5) n = 5;
+    // never step back: the estimate can wobble
+    if (n > shown) {
+      for (i = 0; i < n; i++) dot[i].SetImage(on);
+      shown = n;
+    }
   }
 }
 Plymouth.SetBootProgressFunction(progress_callback);

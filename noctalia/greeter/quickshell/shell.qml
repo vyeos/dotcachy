@@ -225,8 +225,8 @@ ShellRoot {
             // password field, low and centred
             Rectangle {
                 id: field
-                width: 240 * screen.s
-                height: 34 * screen.s
+                width: 280 * screen.s
+                height: 40 * screen.s
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 70 * screen.s
@@ -237,15 +237,16 @@ ShellRoot {
                 TextInput {
                     id: pw
                     anchors.fill: parent
-                    anchors.leftMargin: 10 * screen.s
-                    anchors.rightMargin: 10 * screen.s
+                    anchors.leftMargin: 12 * screen.s
+                    anchors.rightMargin: 12 * screen.s
                     verticalAlignment: TextInput.AlignVCenter
                     horizontalAlignment: TextInput.AlignHCenter
+                    clip: true          // long passwords scroll inside the box
                     echoMode: TextInput.Password
                     passwordCharacter: "•"
                     font.family: "Graphite Mono"
-                    font.pixelSize: 13 * screen.s
-                    font.letterSpacing: 0.5 * screen.s
+                    font.pixelSize: 26 * screen.s
+                    font.letterSpacing: 3 * screen.s
                     color: root.ink
                     selectionColor: root.edgeHi
                     cursorDelegate: Rectangle { width: Math.max(1, screen.s); color: root.ink; visible: pw.activeFocus && pw.text.length > 0 }

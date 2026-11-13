@@ -14,6 +14,8 @@
 //	graphite bind ID LABEL COMBO CMD...   set, change or remove a keybind
 //	graphite bind-record start|stop       suspend Hyprland's binds while recording one
 //	graphite set-default ROLE ID  change the default terminal, browser, files or editor
+//	graphite cursors              print the installed cursor themes as JSON
+//	graphite cursor NAME          switch the cursor theme (Hyprland, env files, GTK, gsettings)
 //	graphite webapp NAME URL [ICON], webapp-rename, webapp-icon, webapp-delete, images
 //	graphite task-menu ID CLASS   print a running app's tray menu and .desktop actions as JSON
 //	graphite task-menu-click SERVICE MENUPATH ITEM   activate a tray menu item
@@ -69,6 +71,10 @@ func main() {
 		cmdBind(args)
 	case "bind-record":
 		cmdBindRecord(args[0])
+	case "cursors":
+		cmdCursors()
+	case "cursor":
+		cmdCursor(args[0])
 	case "set-default":
 		cmdSetDefault(args[0], args[1])
 	case "webapp":

@@ -1,0 +1,633 @@
+{
+ "bd_double_arrow": {
+  "box": [
+   7,
+   7,
+   34,
+   34
+  ],
+  "aliases": [
+   "c7088f0f3e6c8088236ef8e1e3e70000",
+   "nwse-resize",
+   "size_fdiag"
+  ]
+ },
+ "bottom_left_corner": {
+  "box": [
+   3,
+   3,
+   42,
+   43
+  ],
+  "aliases": [
+   "sw-resize"
+  ]
+ },
+ "bottom_right_corner": {
+  "box": [
+   3,
+   3,
+   42,
+   43
+  ],
+  "aliases": [
+   "se-resize"
+  ]
+ },
+ "bottom_side": {
+  "box": [
+   3,
+   3,
+   42,
+   42
+  ],
+  "aliases": [
+   "s-resize"
+  ]
+ },
+ "bottom_tee": {
+  "box": [
+   2,
+   3,
+   44,
+   42
+  ],
+  "aliases": []
+ },
+ "center_ptr": {
+  "box": [
+   6,
+   3,
+   36,
+   41
+  ],
+  "aliases": []
+ },
+ "circle": {
+  "box": [
+   7,
+   1,
+   36,
+   44
+  ],
+  "aliases": [
+   "forbidden"
+  ]
+ },
+ "context-menu": {
+  "box": [
+   7,
+   1,
+   36,
+   44
+  ],
+  "aliases": []
+ },
+ "copy": {
+  "box": [
+   7,
+   1,
+   36,
+   44
+  ],
+  "aliases": [
+   "1081e37283d90000800003c07f3ef6bf",
+   "6407b0e94181790501fd1e167b474872",
+   "b66166c04f8c3109214a4fbd64a50fc8"
+  ]
+ },
+ "cross": {
+  "box": [
+   1,
+   1,
+   46,
+   46
+  ],
+  "aliases": [
+   "cross_reverse",
+   "diamond_cross"
+  ]
+ },
+ "crossed_circle": {
+  "box": [
+   4,
+   4,
+   40,
+   40
+  ],
+  "aliases": [
+   "03b6e0fcb3499374a867c041f52298f0",
+   "not-allowed"
+  ]
+ },
+ "crosshair": {
+  "box": [
+   1,
+   1,
+   46,
+   46
+  ],
+  "aliases": []
+ },
+ "dnd-ask": {
+  "box": [
+   4,
+   8,
+   43,
+   39
+  ],
+  "aliases": []
+ },
+ "dnd-copy": {
+  "box": [
+   4,
+   8,
+   43,
+   39
+  ],
+  "aliases": []
+ },
+ "dnd-link": {
+  "box": [
+   4,
+   8,
+   43,
+   39
+  ],
+  "aliases": [
+   "alias"
+  ]
+ },
+ "dnd_no_drop": {
+  "box": [
+   4,
+   8,
+   43,
+   38
+  ],
+  "aliases": [
+   "no-drop"
+  ]
+ },
+ "dotbox": {
+  "box": [
+   4,
+   5,
+   40,
+   38
+  ],
+  "aliases": [
+   "dot_box_mask",
+   "draped_box",
+   "icon",
+   "target"
+  ]
+ },
+ "fd_double_arrow": {
+  "box": [
+   7,
+   7,
+   34,
+   34
+  ],
+  "aliases": [
+   "fcf1c3c7cd4491d801f1e1c78f100000",
+   "nesw-resize",
+   "size_bdiag"
+  ]
+ },
+ "grabbing": {
+  "box": [
+   8,
+   8,
+   32,
+   32
+  ],
+  "aliases": [
+   "closedhand",
+   "dnd-move",
+   "dnd-none",
+   "fcf21c00b30f7e3f83fe0dfd12e71cff"
+  ]
+ },
+ "hand1": {
+  "box": [
+   3,
+   2,
+   42,
+   44
+  ],
+  "aliases": [
+   "grab",
+   "openhand"
+  ]
+ },
+ "hand2": {
+  "box": [
+   3,
+   3,
+   41,
+   43
+  ],
+  "aliases": [
+   "9d800788f1b08800ae810202380a0822",
+   "e29285e634086352946a0e7090d73106",
+   "pointer",
+   "pointing_hand"
+  ]
+ },
+ "left_ptr": {
+  "box": [
+   7,
+   3,
+   34,
+   42
+  ],
+  "aliases": [
+   "arrow",
+   "default",
+   "top_left_arrow"
+  ]
+ },
+ "left_ptr_watch": {
+  "box": [
+   7,
+   3,
+   30,
+   42
+  ],
+  "aliases": [
+   "00000000000000020006000e7e9ffc3f",
+   "08e8e1c95fe2fc01f976f1e063a24ccd",
+   "3ecb610c1bf2410f44200f48c40d3599",
+   "progress"
+  ]
+ },
+ "left_side": {
+  "box": [
+   3,
+   3,
+   42,
+   42
+  ],
+  "aliases": [
+   "w-resize"
+  ]
+ },
+ "left_tee": {
+  "box": [
+   3,
+   1,
+   41,
+   44
+  ],
+  "aliases": []
+ },
+ "link": {
+  "box": [
+   7,
+   1,
+   36,
+   44
+  ],
+  "aliases": [
+   "3085a0e285430894940527032f8b26df",
+   "640fb0e74195791501fd1ed57b41487f",
+   "a2a266d0498c3104214a47bd64ab0fc8"
+  ]
+ },
+ "ll_angle": {
+  "box": [
+   4,
+   4,
+   40,
+   40
+  ],
+  "aliases": []
+ },
+ "lr_angle": {
+  "box": [
+   4,
+   4,
+   40,
+   40
+  ],
+  "aliases": []
+ },
+ "move": {
+  "box": [
+   3,
+   3,
+   42,
+   42
+  ],
+  "aliases": [
+   "4498f0e0c1937ffe01fd06f973665830",
+   "9081237383d90e509aa00f00170e968f",
+   "all-scroll",
+   "fleur",
+   "size_all"
+  ]
+ },
+ "pencil": {
+  "box": [
+   7,
+   7,
+   34,
+   34
+  ],
+  "aliases": [
+   "draft"
+  ]
+ },
+ "plus": {
+  "box": [
+   4,
+   5,
+   40,
+   38
+  ],
+  "aliases": [
+   "cell"
+  ]
+ },
+ "pointer-move": {
+  "box": [
+   7,
+   1,
+   36,
+   44
+  ],
+  "aliases": []
+ },
+ "question_arrow": {
+  "box": [
+   7,
+   3,
+   29,
+   42
+  ],
+  "aliases": [
+   "5c6cd98b3f3ebcb1f9c7f1c204630408",
+   "d9ce0ab605698f320427677b458ad60b",
+   "help",
+   "left_ptr_help",
+   "whats_this"
+  ]
+ },
+ "right_ptr": {
+  "box": [
+   7,
+   3,
+   34,
+   42
+  ],
+  "aliases": [
+   "draft_large",
+   "draft_small"
+  ]
+ },
+ "right_side": {
+  "box": [
+   3,
+   3,
+   42,
+   42
+  ],
+  "aliases": [
+   "e-resize"
+  ]
+ },
+ "right_tee": {
+  "box": [
+   4,
+   3,
+   39,
+   41
+  ],
+  "aliases": []
+ },
+ "sb_down_arrow": {
+  "box": [
+   13,
+   5,
+   22,
+   38
+  ],
+  "aliases": [
+   "down-arrow"
+  ]
+ },
+ "sb_h_double_arrow": {
+  "box": [
+   3,
+   14,
+   42,
+   20
+  ],
+  "aliases": [
+   "028006030e0e7ebffc7f7070c0600140",
+   "14fef782d02440884392942c1120523",
+   "col-resize",
+   "ew-resize",
+   "h_double_arrow",
+   "size-hor",
+   "size_hor",
+   "split_h"
+  ]
+ },
+ "sb_left_arrow": {
+  "box": [
+   5,
+   13,
+   38,
+   22
+  ],
+  "aliases": [
+   "left-arrow"
+  ]
+ },
+ "sb_right_arrow": {
+  "box": [
+   5,
+   13,
+   38,
+   22
+  ],
+  "aliases": [
+   "right-arrow"
+  ]
+ },
+ "sb_up_arrow": {
+  "box": [
+   13,
+   5,
+   22,
+   38
+  ],
+  "aliases": [
+   "up-arrow"
+  ]
+ },
+ "sb_v_double_arrow": {
+  "box": [
+   14,
+   3,
+   20,
+   42
+  ],
+  "aliases": [
+   "00008160000006810000408080010102",
+   "2870a09082c103050810ffdffffe0204",
+   "double_arrow",
+   "ns-resize",
+   "row-resize",
+   "size-ver",
+   "size_ver",
+   "split_v",
+   "v_double_arrow"
+  ]
+ },
+ "tcross": {
+  "box": [
+   6,
+   6,
+   36,
+   36
+  ],
+  "aliases": [
+   "color-picker"
+  ]
+ },
+ "top_left_corner": {
+  "box": [
+   3,
+   3,
+   42,
+   42
+  ],
+  "aliases": [
+   "nw-resize"
+  ]
+ },
+ "top_right_corner": {
+  "box": [
+   3,
+   3,
+   42,
+   42
+  ],
+  "aliases": [
+   "ne-resize"
+  ]
+ },
+ "top_side": {
+  "box": [
+   3,
+   3,
+   42,
+   42
+  ],
+  "aliases": [
+   "n-resize"
+  ]
+ },
+ "top_tee": {
+  "box": [
+   2,
+   3,
+   44,
+   42
+  ],
+  "aliases": []
+ },
+ "ul_angle": {
+  "box": [
+   4,
+   4,
+   40,
+   40
+  ],
+  "aliases": []
+ },
+ "ur_angle": {
+  "box": [
+   4,
+   4,
+   40,
+   40
+  ],
+  "aliases": []
+ },
+ "vertical-text": {
+  "box": [
+   2,
+   14,
+   43,
+   20
+  ],
+  "aliases": []
+ },
+ "wait": {
+  "box": [
+   4,
+   4,
+   40,
+   40
+  ],
+  "aliases": [
+   "watch"
+  ]
+ },
+ "wayland-cursor": {
+  "box": [
+   3,
+   3,
+   42,
+   43
+  ],
+  "aliases": []
+ },
+ "X_cursor": {
+  "box": [
+   5,
+   5,
+   38,
+   38
+  ],
+  "aliases": [
+   "pirate",
+   "x-cursor"
+  ]
+ },
+ "xterm": {
+  "box": [
+   13,
+   2,
+   21,
+   43
+  ],
+  "aliases": [
+   "ibeam",
+   "text"
+  ]
+ },
+ "zoom-in": {
+  "box": [
+   5,
+   5,
+   38,
+   38
+  ],
+  "aliases": []
+ },
+ "zoom-out": {
+  "box": [
+   5,
+   5,
+   38,
+   38
+  ],
+  "aliases": []
+ }
+}

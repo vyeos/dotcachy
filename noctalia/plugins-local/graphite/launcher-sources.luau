@@ -262,6 +262,8 @@ function Src.root(apps, live, links)
   attachShortcuts(out, roleItems)
   table.insert(out, item("Apps", "create-webapp", "Create Web App", "Turn a website into an app",
     { action = "webapp", glyph = "world", hay = "webapp web app pwa site website new add install", fuzzy = true, transient = true, noBind = true }))
+  table.insert(out, item("Panels", "cursor-theme", "Cursor Theme", "Choose the mouse pointer · or type cur",
+    { action = "prefix", prefix = "cur ", glyph = "pointer", hay = "cursor mouse pointer theme arrow", fuzzy = true, transient = true, noBind = true }))
   table.insert(out, item("Quicklinks", "create-quicklink", "Create Quicklink", "Save a link you can search",
     { action = "quicklink", glyph = "plus", hay = "url bookmark new add link", fuzzy = true, transient = true, noBind = true }))
   return out
@@ -442,6 +444,29 @@ local function wallpaperResults(rest, redraw)
   return out
 end
 
+-- Installed cursor themes: any icon theme folder with a cursors/ subfolder.
+local function cursorResults(rest)
+  local home = noctalia.getenv("HOME") or ""
+  local env = noctalia.readFile(home .. "/.config/hypr/config/environment.lua") or ""
+  local current = string.match(env, 'hl%.env%("XCURSOR_THEME",%s*"([^"]*)"%)')
+  local out, seen = {}, {}
+  for _, d in { home .. "/.local/share/icons", home .. "/.icons", "/usr/share/icons" } do
+    for _, n in noctalia.listDir(d) or {} do
+      local path = d .. "/" .. n
+      if not seen[n] and n ~= "default" and noctalia.listDir(path .. "/cursors") ~= nil
+        and (rest == "" or string.find(string.lower(n), rest, 1, true)) then
+        seen[n] = true
+        local hypr = noctalia.fileInfo(path .. "/manifest.hl") ~= nil
+        table.insert(out, item("Cursors", "cursor:" .. n, n, if n == current then "In use" else (if hypr then "Cursor theme" else "Cursor theme · Xcursor only"), {
+          glyph = "pointer", state = if n == current then "on" else nil, run = helper("cursor", n), location = path, copy = n, transient = true, noBind = true,
+        }))
+      end
+    end
+  end
+  table.sort(out, function(a, b) return a.lname < b.lname end)
+  return out
+end
+
 -- (section title, items) when text starts with a prefix, else nil.
 function Src.prefixed(text, redraw)
   local lower = string.lower((string.gsub(text, "^%s+", "")))
@@ -452,6 +477,8 @@ function Src.prefixed(text, redraw)
     title, results = "Clipboard", clipboardResults(noctalia.string.trim(string.sub(lower, 4)))
   elseif string.sub(lower, 1, 3) == "wp " then
     title, results = "Wallpapers", wallpaperResults(noctalia.string.trim(string.sub(lower, 4)), redraw)
+  elseif string.sub(lower, 1, 4) == "cur " then
+    title, results = "Cursor themes", cursorResults(noctalia.string.trim(string.sub(lower, 5)))
   else
     return nil
   end
@@ -465,7 +492,7 @@ end
 local FIRST = {
   Apps = "Switch to it or open it", Defaults = "Switch to it or open it", ["Web apps"] = "Switch to it or open it", Windows = "Focus", Toggles = "Toggle", Power = "Run", Panels = "Open",
   Maths = "Copy answer", Emoji = "Copy", Clipboard = "Copy", Files = "Open", Wallpapers = "Apply", Shortcuts = "Open shortcuts panel",
-  Web = "Search in a new tab", Quicklinks = "Open",
+  Web = "Search in a new tab", Quicklinks = "Open", Cursors = "Apply",
 }
 
 -- Entries are { label, hint, run = command } or { label, hint, op = name }; the panel carries out ops.
@@ -518,7 +545,7 @@ function Src.menu(it)
   elseif it.kind == "Files" then
     add("Open file location", "ctrl enter", "op", "reveal")
     add("Copy path", "ctrl shift c", "run", copyCmd(it.copy))
-  elseif it.kind == "Wallpapers" then
+  elseif it.kind == "Wallpapers" or it.kind == "Cursors" then
     add("Open file location", "ctrl enter", "op", "reveal")
   elseif it.kind == "Panels" then
     add("Open file location", "ctrl enter", "op", "reveal")

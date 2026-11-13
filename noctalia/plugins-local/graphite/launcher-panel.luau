@@ -299,6 +299,10 @@ local function activate(it)
     render()
   elseif it.action == "quicklink" then
     askQuicklink(nil)
+  elseif it.action == "prefix" then
+    query, sel, note = it.prefix, 1, nil
+    opens += 1 -- ui.input only takes a new value through a new key
+    compute(); render()
   elseif it.confirm then
     askConfirm(it, it.confirm .. " now?", function() run(it, it.run) end)
   else

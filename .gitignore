@@ -21,6 +21,7 @@
 !/fastfetch/
 !/nvim/
 !/boot/
+!/cursors/
 __pycache__/
 *.pyc
 noctalia/plugins-local/graphite/bin/

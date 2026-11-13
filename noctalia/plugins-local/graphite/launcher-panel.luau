@@ -1,6 +1,6 @@
 --!nonstrict
 -- Launcher (SUPER + Space): one search line for apps, windows, toggles, power,
--- panels, maths, files, the web and more. Pinned, suggestions and recents show
+-- panels, maths, files, the web and more. Pinned apps and recents show
 -- before anything is typed; ranked results after. Enter runs the highlighted
 -- result, Ctrl+Enter opens its file location, Ctrl+K lists what else it can do.
 

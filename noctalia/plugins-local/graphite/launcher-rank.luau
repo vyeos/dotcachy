@@ -209,10 +209,8 @@ function R.rank(items, q)
 end
 
 -- The view before anything is typed: { { title, items } }, empty sections left out.
--- Each result appears once. Recents claim theirs before suggestions, so suggestions
--- are the habits that a glance at recents wouldn't already show.
+-- Pinned first, then the most recently used. Each result appears once.
 function R.home(items)
-  local now = os.time()
   local byId, taken = {}, {}
   for _, a in items do byId[a.id] = a end
 
@@ -223,7 +221,7 @@ function R.home(items)
 
   local used = {}
   for id, u in data.use do
-    if byId[id] and not taken[id] then table.insert(used, { a = byId[id], last = u.last, f = frecency(id, now) }) end
+    if byId[id] and not taken[id] then table.insert(used, { a = byId[id], last = u.last }) end
   end
 
   table.sort(used, function(x, y)
@@ -234,22 +232,10 @@ function R.home(items)
   for _, it in used do
     if #recents == SECTION_MAX then break end
     table.insert(recents, it.a)
-    taken[it.a.id] = true
-  end
-
-  table.sort(used, function(x, y)
-    if x.f ~= y.f then return x.f > y.f end
-    return x.a.lname < y.a.lname
-  end)
-  local suggested = {}
-  for _, it in used do
-    if #suggested == SECTION_MAX then break end
-    if not taken[it.a.id] then table.insert(suggested, it.a) end
   end
 
   local out = {}
   if #pinned > 0 then table.insert(out, { title = "Pinned", items = pinned }) end
-  if #suggested > 0 then table.insert(out, { title = "Suggestions", items = suggested }) end
   if #recents > 0 then table.insert(out, { title = "Recents", items = recents }) end
   return out
 end

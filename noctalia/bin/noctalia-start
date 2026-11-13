@@ -11,7 +11,7 @@
 
 # Square password marks on the lock screen: Noctalia only offers circles or random icons,
 # so ../assets holds the stock assets (symlinks) plus an icon font whose circle-filled glyph
-# is a smaller square (built by ../assets/square-mask.py). Use it only while the stock font
+# is a smaller square (built by ../assets/square-mask: cd there and go run .). Use it only while the stock font
 # is the one it was built from; after a Noctalia update, stock circles until it is rebuilt.
 STOCK_SHA=352fffc1e9024e5a1ddb5fbf9db532dae793839ae338b6e8234f32e792a8723c
 assets="$(dirname "$(readlink -f "$0")")/../assets"
@@ -19,7 +19,7 @@ if [ -f "$assets/fonts/noctalia-tabler.ttf" ] &&
    [ "$(sha256sum /usr/share/noctalia/assets/fonts/noctalia-tabler.ttf | cut -d' ' -f1)" = "$STOCK_SHA" ]; then
   export NOCTALIA_ASSETS_DIR="$(readlink -f "$assets")"
 else
-  logger -t noctalia-start "stock icon font changed, square password marks off until assets/square-mask.py is rerun"
+  logger -t noctalia-start "stock icon font changed, square password marks off until assets/square-mask is rerun (go run .)"
 fi
 
 tries=0

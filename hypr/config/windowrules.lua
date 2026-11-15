@@ -218,4 +218,4 @@ GRAPHITE_PANEL_DIM = hl.layer_rule({
 GRAPHITE_PANEL_DIM:set_enabled(false)
 
 -- Scrolling
-hl.window_rule({ match = { class = "^(firefox|zen|brave-origin)$" }, scroll_touchpad = "0.25" })
+hl.window_rule({ match = { class = "^(firefox|zen|brave-origin|brave-.*)$" }, scroll_touchpad = "0.20" })

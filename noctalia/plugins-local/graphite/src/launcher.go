@@ -113,6 +113,33 @@ func homeFiles() []fileRow {
 			out = append(out, fileRow{home + "/" + strings.TrimRight(rel, "/"), strings.HasSuffix(rel, "/")})
 		}
 	}
+	return dropFloods(home, out)
+}
+
+// fileFlood is how many files one folder two levels under home (~/Downloads/Some Game)
+// may add. A bigger folder (a game install, an unpacked SDK) shows as just its own row:
+// on 2026-11-21 a 2,238-file game in Downloads pushed the launcher past Noctalia's script
+// CPU budget and the panel opened empty.
+const fileFlood = 300
+
+func dropFloods(home string, rows []fileRow) []fileRow {
+	top := func(path string) string {
+		parts := strings.SplitN(strings.TrimPrefix(path, home+"/"), "/", 3)
+		if len(parts) < 3 {
+			return "" // the folder itself or something above it
+		}
+		return parts[0] + "/" + parts[1]
+	}
+	count := map[string]int{}
+	for _, r := range rows {
+		count[top(r.Path)]++
+	}
+	out := rows[:0]
+	for _, r := range rows {
+		if t := top(r.Path); t == "" || count[t] <= fileFlood {
+			out = append(out, r)
+		}
+	}
 	return out
 }
 

@@ -18,7 +18,7 @@ local appsPath = if dataDir then dataDir .. "/apps.json" else nil
 local livePath = if dataDir then dataDir .. "/launcher-live.json" else nil
 
 local apps, live, items = {}, {}, {}
-local shown, heads = {}, {} -- heads: shown index -> section title drawn above that row
+local shown, heads, starts = {}, {}, {} -- heads: shown index -> title drawn above that row; starts: where each group begins (Ctrl+Up/Down)
 local query, sel, opens = "", 1, 0
 local histPos = nil         -- position in past searches while recalling them with Up
 local note = nil            -- short message in the footer
@@ -79,11 +79,12 @@ end
 
 function compute()
   follow = true
-  shown, heads = {}, {}
+  shown, heads, starts = {}, {}, {}
   local q = string.lower(noctalia.string.trim(query))
   local function section(title, list)
     if #list == 0 then return end
-    heads[#shown + 1] = title
+    if title then heads[#shown + 1] = title end
+    starts[#shown + 1] = true
     for _, it in list do table.insert(shown, it) end
   end
   if q == "" then
@@ -93,20 +94,21 @@ function compute()
     if title then
       section(title, prefixed)
     else
+      -- One list without headings: apps, then files, then panels, then the rest,
+      -- web search last. Each group keeps its ranked order.
       local maths = Src.maths(query)
-      if maths then section("Maths", { maths }) end
+      if maths then section(nil, { maths }) end
       local link = Src.quicklinkHit(query)
-      if link then section("Quicklink", { link }) end
+      if link then section(nil, { link }) end
       local ranked = Rank.rank(items, q)
-      if ranked[1] then section("Top result", { ranked[1] }) end
-      for _, kind in Src.KIND_ORDER do
+      for _, kind in Src.SEARCH_ORDER do
         local group = {}
-        for i = 2, #ranked do
-          if ranked[i].kind == kind then table.insert(group, ranked[i]) end
+        for _, it in ranked do
+          if it.kind == kind then table.insert(group, it) end
         end
-        section(kind, group)
+        section(nil, group)
       end
-      section("Search the web", { Src.webItem(query) })
+      section(nil, { Src.webItem(query) })
     end
   end
   sel = math.clamp(sel, 1, math.max(1, #shown))
@@ -568,7 +570,7 @@ end
 local function jump(d)
   local i = sel + d
   while i >= 1 and i <= #shown do
-    if heads[i] then
+    if starts[i] then
       sel = i
       follow = true
       render()

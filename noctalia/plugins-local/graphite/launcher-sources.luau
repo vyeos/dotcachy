@@ -13,7 +13,7 @@ local dataDir = noctalia.pluginDataDir() or "."
 local BIN = dir .. "/bin/graphite"
 local PREFIX_MAX = 60
 
-Src.KIND_ORDER = { "Defaults", "Apps", "Web apps", "Windows", "Toggles", "Connections", "Power", "Panels", "Quicklinks", "Files", "Shortcuts" }
+Src.SEARCH_ORDER = { "Defaults", "Apps", "Web apps", "Files", "Panels", "Windows", "Toggles", "Connections", "Power", "Quicklinks", "Shortcuts" }
 
 local function helper(...) return { BIN, ... } end
 local function copyCmd(text) return { "wl-copy", "--", text } end
